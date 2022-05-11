@@ -12,3 +12,7 @@ This path includes:
 - Automation scripts to arrange the jobs
 
 Unsure of what language to write in, 
+
+Presentation Layer - inboundAPI and outboundAPI
+Business Logic Layer - processing > intakejob and reportjob
+Persistence Layer - databaseConn > DAO
