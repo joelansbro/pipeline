@@ -13,7 +13,6 @@
 # author string
 # project - individual project assignment for report tracking string
 # date_published int
-# dek unknown at this point I should really look into what this means
 # lead_image_url string
 # content string
 # next_page_url string
