@@ -1,0 +1,14 @@
+
+this requirements file isn't correct at the moment 
+
+
+Python 3.10
+Flask - micro web framework for REST API
+PySpark - multithreaded data processing
+Pandas - Data manipulation
+RabbitMQ - message broker
+Celery - task management framework asynchronous task queue + scheduling
+MongoDB for data storage of raw articles, and also reports
+
+
+just putting this here for reference in the future

@@ -28,6 +28,10 @@
 # unsure at this stage what particular values to enforce, and which could be null (ie: keywords likely null and created later)
 
 # good guide - https://www.digitalocean.com/community/tutorials/processing-incoming-request-data-in-flask
+# also, two cool tools to use - fuzzer testing - github.com/Endava/cats
+# Mitmproxy2swagger - reverse engineer REST APIs to see what others are doing - github.com/alufers/mitmproxy2swagger
+
+
 
 from flask import Flask, request
 from sqlalchemy import null

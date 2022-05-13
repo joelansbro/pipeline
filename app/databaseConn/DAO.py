@@ -8,3 +8,7 @@
 # data cleaned from the inboundAPI to raw data location 
 
 # persistence layer - implements the logic of interacting with the database
+
+
+# I am running this application within a Docker Container, we could open up a port to an outside database for external hosting
+# easy as connecting a Port to a cloud Database for example

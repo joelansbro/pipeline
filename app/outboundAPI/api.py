@@ -25,3 +25,9 @@ def get_users():
 if __name__ == '__main__':
     app.run()
 
+
+
+# have the API accomplish two things
+
+# 1) get individual articles based on specific project and article title - over to a basic frontend
+# 2) send an API to build a Python job in the events queue that will create generic reports from the article data
