@@ -40,9 +40,17 @@ class JsonPayload():
         self.title = title
 
 
+@app.route('/query-example', methods=['POST'])
+def query_example():
+    # for passing via a single POST method without JSON
+    title = request.args['title']
+    # etc etc
+
 @app.route('/json-example', methods=['POST'])
 def json_example():
     request_data = request.get_json()
+
+# I've created an article object in order to pass the data round more easily, within serializer.py
 
     title = None
     author = None
@@ -108,6 +116,6 @@ if __name__ == '__main__':
 
 # look to ticket to see further, but in a nutshell:
 # need to refactor
-# store the params within a good data structure
-
-
+# will need to sanitise bad input re a JSON parser
+# will need to add an endpoint that checks for multiple params, an event listener that continuously looks for multiple JSON files
+# will need to consider other payload methods, for instance a POST where all params are within a string
