@@ -8,7 +8,9 @@ PySpark - multithreaded data processing
 Pandas - Data manipulation
 RabbitMQ - message broker
 Celery - task management framework asynchronous task queue + scheduling
-MongoDB for data storage of raw articles, and also reports
+SQLalchemy - for creating
+SpaCY for NLP jobs
+
 
 
 just putting this here for reference in the future

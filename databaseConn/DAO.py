@@ -12,3 +12,8 @@
 
 # I am running this application within a Docker Container, we could open up a port to an outside database for external hosting
 # easy as connecting a Port to a cloud Database for example
+
+
+# the advantage of creating the database outside is we ensure that we don't harcode the database, allowing us to insert any database with a table that fits the schema
+# for the test, I will be using SQLite
+# SQLite can accept the input I have just tested
