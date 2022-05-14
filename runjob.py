@@ -46,14 +46,11 @@ This is a test
 This below is currently a test to ensure that I can get a Docker file up and running, this should expose a port for API use
 """
 
-from flask import Flask
 
-app = Flask(__name__)
+from celery import Celery
 
-@app.route('/test-point', methods=['GET'])
-def test_point():
-    return "Hello"
+app = Celery('tasks', broker='pyamqp://guest@localhost//')
 
-if __name__ == '__main__':
-    # run app in debug mode on port 5000
-    app.run(debug=True, port=5000)
+@app.task
+def add(x, y):
+    return x + y

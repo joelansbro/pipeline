@@ -4,9 +4,10 @@
 # Container the actual running process
 
 
-FROM python:3.10
+FROM ubuntu:18.04
 
 WORKDIR /app
+COPY . /app/
 
 COPY requirements.txt requirements.txt
 
