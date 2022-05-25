@@ -1,2 +1,5 @@
 /testdata
 scratch.py
+*__pycache_*
+*.json
+*.sqlite
