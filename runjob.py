@@ -3,11 +3,6 @@
 # if this runjob is active, maintain a server connection for the inboundAPI
 # automate processing job to take affect every thirty minutes or so (define specifically)
 
-
-"""
-This is a test
-
-"""
 # This module will define the API endpoints to listen in to the scraped data
 # acts as a receiver to pass along the data to a raw storage location
 # inbound data from this api needs to be appended with an identifier to point out what scraping job it belongs to
@@ -42,15 +37,3 @@ This is a test
 # Mitmproxy2swagger - reverse engineer REST APIs to see what others are doing - github.com/alufers/mitmproxy2swagger
 
 
-"""
-This below is currently a test to ensure that I can get a Docker file up and running, this should expose a port for API use
-"""
-
-
-from celery import Celery
-
-app = Celery('tasks', broker='pyamqp://guest@localhost//')
-
-@app.task
-def add(x, y):
-    return x + y

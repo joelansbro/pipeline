@@ -6,6 +6,8 @@ Python 3.10
 Flask - micro web framework for REST API
 PySpark - multithreaded data processing
 Pandas - Data manipulation
+Numpy - for graphing
+matplotlib - graphing
 RabbitMQ - message broker - likely requires erlang to be installed also
 Celery - task management framework asynchronous task queue + scheduling
 SQLalchemy - for creating
