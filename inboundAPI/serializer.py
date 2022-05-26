@@ -1,6 +1,7 @@
 # serializer to take in the API POST and convert it into JSON
 
 import json
+import datetime as dt
 
 class Article:
     def __init__(self, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages):
@@ -18,6 +19,7 @@ class Article:
         self.direction = direction
         self.total_pages = total_pages
         self.rendered_pages = rendered_pages
+        self.created_at = dt.datetime.now()
 
 
 # will need a serializer method to convert the custom object that is taken in by the inbound API and into a JSON object for storage
