@@ -5,6 +5,9 @@ for usage, ensure that rabbitMQ is running (see commands text file)
 the to start server:
 py -m celery --app celeryBroker worker --loglevel=INFO
 
+flower is installed to monitor the workflow
+ry -m celery --app celeryBroker flower
+
 """
 import json
 from celery import Celery
@@ -16,15 +19,10 @@ app = Celery(
 )
 
 @app.task
-def add(x, y):
-    return x + y
-
-@app.task
-def printResponse(payload):
+def saveJson(payload):
     print(type(payload))
-    # <dict>
     data = json.dumps(payload)
-    with open('data.json', 'w') as f:
+    with open ('data.json', 'w') as f:
         json.dump(data, f)
     print(data)
-    return "Saved down file"
+    return "Saved down file {data}".format(data=data)
