@@ -21,8 +21,18 @@ Persistence Layer - databaseConn > DAO
 
 - InboundAPI
 Current startup commands:
-Celery `py -m celery --app inboundAPI/celeryBroker worker --loglevel=INFO`
-Flask `py inboundAPI/api.py
-Test script `py inboundAPI/testapi.py`
+Celery
+ 
+`py -m celery --app inboundAPI/celeryBroker worker --loglevel=INFO`
 
+Flask 
 
+`py inboundAPI/api.py
+
+Test script 
+
+`py inboundAPI/testapi.py`
+
+TODO: Use marshmallow for json schema validation and serialisation
+
+-----
