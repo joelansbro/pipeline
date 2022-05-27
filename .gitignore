@@ -3,3 +3,4 @@ scratch.py
 *__pycache_*
 *.json
 *.sqlite
+celerybeat-schedule

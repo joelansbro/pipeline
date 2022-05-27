@@ -10,6 +10,10 @@ from celeryBroker import saveJson
 app = Flask(__name__)
 
 
+@app.route('/', methods=['GET'])
+def homepage():
+    return "post JSON to endpoint localhost/inbound/add_article/uniqueID"
+
 @app.route('/inbound/add_article/<uuid>', methods=['POST'])
 def add_article(uuid):
     content = request.json
