@@ -13,6 +13,8 @@ py -m celery --app celeryBroker flower
 import json
 from celery import Celery
 from celery.schedules import crontab
+# need to figure out how to import intakejob into this script, or move the broker to outside of this folder
+
 
 app = Celery(
     broker="pyamqp://joel:pipeline@localhost:5672/inbound",
@@ -21,12 +23,12 @@ app = Celery(
 )
 
 @app.task
-def saveJson(payload):
+def saveJson(payload, uuid):
     print(type(payload))
     data = json.dumps(payload)
-    with open ('data.json', 'w') as f:
-        json.dump(data, f)
-    print(data)
+    json_without_slash = json.loads(data)
+    with open ('./stash/{}.json'.format(uuid), 'w') as f:
+        json.dump(json_without_slash, f)
     return "Saved down file {data}".format(data=data)
 
 

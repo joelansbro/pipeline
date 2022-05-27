@@ -6,6 +6,7 @@ run with py api.py
 
 from flask import Flask, request, jsonify
 from celeryBroker import saveJson
+import json
 
 app = Flask(__name__)
 
@@ -17,7 +18,9 @@ def homepage():
 @app.route('/inbound/add_article/<uuid>', methods=['POST'])
 def add_article(uuid):
     content = request.json
-    saveJson.delay(content)
+    parsed = json.dumps(content)
+    json_without_slash = json.loads(parsed)
+    saveJson.delay(json_without_slash, uuid)
     return uuid
 
 if __name__ == '__main__':
