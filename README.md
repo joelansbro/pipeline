@@ -16,3 +16,23 @@ Unsure of what language to write in,
 Presentation Layer - inboundAPI and outboundAPI
 Business Logic Layer - processing > intakejob and reportjob
 Persistence Layer - databaseConn > DAO
+
+-----
+
+- InboundAPI
+Current startup commands:
+Celery
+ 
+`py -m celery --app inboundAPI/celeryBroker worker --loglevel=INFO`
+
+Flask 
+
+`py inboundAPI/api.py
+
+Test script 
+
+`py inboundAPI/testapi.py`
+
+TODO: Use marshmallow for json schema validation and serialisation
+
+-----
