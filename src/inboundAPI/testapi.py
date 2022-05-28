@@ -21,7 +21,7 @@ jsonText = {
     "rendered_pages":1
  }
 
-res = requests.post('http://localhost:5000/inbound/add_article/1234', json=jsonText)
+res = requests.post('http://localhost:5000/inbound/add_article/4567', json=jsonText)
 
 if res.ok:
     print(res.json())

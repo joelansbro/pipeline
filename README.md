@@ -19,15 +19,18 @@ Persistence Layer - databaseConn > DAO
 
 -----
 
-- InboundAPI
-Current startup commands:
-Celery
- 
-`py -m celery --app inboundAPI/celeryBroker worker --loglevel=INFO`
+runjob.py should start all related servers with their ports
+currently starts Flask api
+
+`py -m celery --app celeryBroker worker --loglevel=INFO -B -s ./data/beat.schedule`
 
 Flask 
 
-`py inboundAPI/api.py
+The inboundAPI is now currently activated via runjob.py within root, which triggers api.py:
+
+`py runjob.py`
+
+In the end we will want a full script (perhaps a shell script) that activates all servers and ports
 
 Test script 
 
