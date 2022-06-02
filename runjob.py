@@ -37,3 +37,7 @@
 # Mitmproxy2swagger - reverse engineer REST APIs to see what others are doing - github.com/alufers/mitmproxy2swagger
 
 
+from src.inboundAPI.api import app
+
+
+app.run(host = '0.0.0.0', debug=True)
