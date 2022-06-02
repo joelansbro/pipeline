@@ -4,3 +4,6 @@ scratch.py
 *.json
 *.sqlite
 celerybeat-schedule
+*.shedule
+data/beat.schedule
+.env

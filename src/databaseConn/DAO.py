@@ -17,3 +17,14 @@
 # the advantage of creating the database outside is we ensure that we don't harcode the database, allowing us to insert any database with a table that fits the schema
 # for the test, I will be using SQLite
 # SQLite can accept the input I have just tested
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from config import SQLALCHEMY_DATABASE_URI
+
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
+
+Session = sessionmaker(bind=engine)
+session = Session()
