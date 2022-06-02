@@ -18,9 +18,10 @@
 # for the test, I will be using SQLite
 # SQLite can accept the input I have just tested
 
-
+from typing import List, Optional
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine.base import Engine
 
 from config import SQLALCHEMY_DATABASE_URI
 
@@ -28,3 +29,20 @@ engine = create_engine(SQLALCHEMY_DATABASE_URI)
 
 Session = sessionmaker(bind=engine)
 session = Session()
+
+
+def fetch_single_article(engine: Engine, uuid) -> Optional[List[dict]]:
+    """ The example provided fetches a list of dicts
+        Which *should* work to return a single article
+    """
+    result = engine.execute(
+        text(
+            """
+            SELECT * FROM articles
+            WHERE id = {};
+            """.format(uuid)
+        )
+    )
+    rows = [dict(row) for row in result.fetchall()]
+    LOGGER.info(f"Selected {result.rowcount} rows: {rows}")
+    return rows

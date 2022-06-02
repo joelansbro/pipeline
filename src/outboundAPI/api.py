@@ -7,19 +7,14 @@
 import json
 
 from flask import Flask
+from ...src.databaseConn.DAO import Session, engine, fetch_single_article
 
 app = Flask(__name__)
 
-@app.route('/users')
-def get_users():
-    users = [
-        {
-            'name':'exampleUser',
-            'display_name': 'Jane Doe',
-            'email': 'user@example.com'
-        }
-    ]
-    return json.dumps(users)
+@app.route('/article/<uuid>')
+def get_article(uuid):
+    article = fetch_single_article(engine, uuid)
+    return json.dumps(article)
 
 
 if __name__ == '__main__':
