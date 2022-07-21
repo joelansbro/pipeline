@@ -15,3 +15,4 @@ CLEANUP_DATA = False
 CELERY_BROKER = environ.get("CELERY_BROKER")
 CELERY_BACKEND = environ.get("CELERY_BACKEND")
 
+SQLITE_DATABASE = './data/maindb.sqlite'
