@@ -1,0 +1,1 @@
+# Flask app to query a single article from ./data/maindb.sqlite

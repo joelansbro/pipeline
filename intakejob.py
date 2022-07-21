@@ -17,7 +17,7 @@ spark = SparkSession.Builder().master('local[*]')\
     .appName('inboundcollation')\
     .getOrCreate()
 
-inboundDir = '../inboundAPI/stash/'
+inboundDir = './data/stash/'
 
 jsonSchema = StructType([
     StructField("title", StringType(), False),
@@ -38,7 +38,7 @@ jsonSchema = StructType([
 
 all_files = []
 
-for root, dirs, files in os.walk('../inboundAPI/stash/'):
+for root, dirs, files in os.walk('./data/stash/'):
     files = glob.glob(os.path.join(root,'*.json'))
     for f in files:
         all_files.append(os.path.abspath(f))
@@ -66,7 +66,7 @@ def create_empty_dataframe():
 
 
 
-df_app = spark.read.schema(jsonSchema).json("../inboundAPI/stash/1234.json", multiLine=True)
+df_app = spark.read.schema(jsonSchema).json("./data/stash/1234.json", multiLine=True)
 pandas = df_app.toPandas()
 print(pandas)
 
@@ -84,4 +84,4 @@ for file in all_files:
     pandas = df_app.toPandas()
     emptyDF = pd.concat([emptyDF, pandas])
 
-emptyDF.to_csv('./output/batch.csv', index=False)
+emptyDF.to_csv('data/collated/batch.csv', index=False)

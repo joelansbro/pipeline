@@ -13,13 +13,15 @@ py -m celery --app celeryBroker flower
 import json
 from celery import Celery
 from celery.schedules import crontab
+from config import CELERY_BROKER, CELERY_BACKEND
+
 # need to figure out how to import intakejob into this script, or move the broker to outside of this folder
 
 
 broker = Celery(
-    broker="pyamqp://joel:pipeline@localhost:5672/inbound",
+    broker=CELERY_BROKER,
     # this backend stores the queries made
-    backend="db+sqlite:///data/results.sqlite"
+    backend=CELERY_BACKEND
 )
 
 @broker.task
