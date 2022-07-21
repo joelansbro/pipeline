@@ -18,7 +18,6 @@ def cleanjob():
         .getOrCreate()
 
     print("cleanjob is now running")
-    
     for root, dirs, files in os.walk('./data/collated/'):
         files = glob.glob(os.path.join(root,'*.parquet'))
         try:
@@ -26,8 +25,10 @@ def cleanjob():
                 current_data = spark.read.parquet(f)
                 current_data.printSchema()
                 print("Parquet data is valid")
-                # current_data.show(True)
+                current_data.show(n=100,truncate=True)
                 # this show is currently broken, see stack trace below
+                print(current_data.count())
+                time.sleep(5)
                 print("Closing this Parquet")
                  
                 parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
@@ -38,20 +39,9 @@ def cleanjob():
         except error:
             print("Error occured ", error)
     
-    time.sleep(10)
     print("clean job completed")
+    spark.stop()
+    time.sleep(5)
 
     # with open('./data/cleaned/cleaned.txt','w') as f:
     #     f.write('output of cleanjob.py')
-
-
-"""
-                ERROR/ForkPoolWorker-9] Task celeryBroker._chainfileprocessing[a37353a4-5b0e-4b38-87d6-6b43cb4785c9] raised unexpected: TypeError('catching classes that do not inherit from BaseException is not allowed')
-                Traceback (most recent call last):
-                File "/home/joel/Documents/pipeline/cleanjob.py", line 29, in cleanjob
-                current_data.show(True)
-                File "/home/joel/.local/lib/python3.8/site-packages/pyspark/sql/dataframe.py", line 488, in show
-                raise TypeError("Parameter 'n' (number of rows) must be an int")
-                TypeError: Parameter 'n' (number of rows) must be an int
-
-                """

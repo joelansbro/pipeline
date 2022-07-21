@@ -95,3 +95,5 @@ def intakejob():
     pq.write_table(table=save_down, where=save_loc)
 
     print("Exiting process now")
+    spark.stop()
+    time.sleep(5)
