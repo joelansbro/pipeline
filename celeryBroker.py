@@ -10,11 +10,12 @@ py -m celery --app celeryBroker flower
 
 """
 
+from ast import keyword
 import json
-from celery import Celery
+from celery import Celery, chain
 from celery.schedules import crontab
 from config import CELERY_BROKER, CELERY_BACKEND
-import intakejob
+import intakejob, cleanjob, keywordjob
 
 # need to figure out how to import intakejob into this script, or move the broker to outside of this folder
 
@@ -42,6 +43,12 @@ def setup_periodic_tasks(sender, **kwargs):
 
 @broker.task
 def bundle():
-    # This is all we'll need to do to activate another job within the scheduler, need to chain a workflow together
-    # Also, change this to not run every ten seconds, the intakejob takes longer than that
-    intakejob.intakejob()
+    print("Bump")
+
+
+# doesn't seem to work so far, I want to eventually put this above as a periodic task, but am at the moment
+# triggering this via testscheduler.py, which works fine so far
+@broker.task
+def _chainfileprocessing():
+    response = chain( intakejob.intakejob(), cleanjob.cleanjob(), keywordjob.keywordjob()).apply_async()
+    return response
