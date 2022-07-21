@@ -13,13 +13,15 @@ import glob
 import os
 import pandas as pd
 
-spark = SparkSession.Builder().master('local[*]')\
-    .appName('inboundcollation')\
-    .getOrCreate()
+def intakejob():
 
-inboundDir = './data/stash/'
+    spark = SparkSession.Builder().master('local[*]')\
+        .appName('inboundcollation')\
+        .getOrCreate()
 
-jsonSchema = StructType([
+    inboundDir = './data/stash/'
+
+    jsonSchema = StructType([
     StructField("title", StringType(), False),
     StructField("author", StringType(), True),
     StructField("project", StringType(), False),
@@ -34,19 +36,19 @@ jsonSchema = StructType([
     StructField("direction", StringType(), True),
     StructField("total_pages", IntegerType(), True),
     StructField("rendered_pages", IntegerType(), True),
-])
+    ])
 
-all_files = []
+    all_files = []
 
-for root, dirs, files in os.walk('./data/stash/'):
-    files = glob.glob(os.path.join(root,'*.json'))
-    for f in files:
-        all_files.append(os.path.abspath(f))
+    for root, dirs, files in os.walk('./data/stash/'):
+        files = glob.glob(os.path.join(root,'*.json'))
+        for f in files:
+            all_files.append(os.path.abspath(f))
 
-def create_empty_dataframe():
-    index = pd.Index([], name="id", dtype=int)
-    # specify column name and data type 
-    columns = [('title', str),
+    def create_empty_dataframe():
+        index = pd.Index([], name="id", dtype=int)
+        # specify column name and data type 
+        columns = [('title', str),
                ('author', str),
                ('project', str),
                ('date_published', str),
@@ -60,28 +62,23 @@ def create_empty_dataframe():
                ('direction', str),
                ('total_pages', int),
                ('rendered_pages', int)]
-    # create the dataframe from a dict
-    return pd.DataFrame({k: pd.Series(dtype=t) for k, t in columns})
+        # create the dataframe from a dict
+        return pd.DataFrame({k: pd.Series(dtype=t) for k, t in columns})
 
 
 
 
-df_app = spark.read.schema(jsonSchema).json("./data/stash/1234.json", multiLine=True)
-pandas = df_app.toPandas()
-print(pandas)
-
-
-
-
-
-
-
-emptyDF = create_empty_dataframe()
-
-for file in all_files:
-    df_app = spark.read.schema(jsonSchema).json(file, multiLine=True)
-    print(df_app)
+    df_app = spark.read.schema(jsonSchema).json("./data/stash/1234.json", multiLine=True)
     pandas = df_app.toPandas()
-    emptyDF = pd.concat([emptyDF, pandas])
+    print(pandas)
 
-emptyDF.to_csv('data/collated/batch.csv', index=False)
+
+    emptyDF = create_empty_dataframe()
+
+    for file in all_files:
+        df_app = spark.read.schema(jsonSchema).json(file, multiLine=True)
+        print(df_app)
+        pandas = df_app.toPandas()
+        emptyDF = pd.concat([emptyDF, pandas])
+
+    emptyDF.to_csv('data/collated/batch.csv', index=False)

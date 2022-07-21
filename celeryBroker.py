@@ -14,6 +14,7 @@ import json
 from celery import Celery
 from celery.schedules import crontab
 from config import CELERY_BROKER, CELERY_BACKEND
+import intakejob
 
 # need to figure out how to import intakejob into this script, or move the broker to outside of this folder
 
@@ -41,4 +42,6 @@ def setup_periodic_tasks(sender, **kwargs):
 
 @broker.task
 def bundle():
-    print('This works')
+    # This is all we'll need to do to activate another job within the scheduler, need to chain a workflow together
+    # Also, change this to not run every ten seconds, the intakejob takes longer than that
+    intakejob.intakejob()
