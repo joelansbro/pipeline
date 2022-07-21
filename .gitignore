@@ -1,10 +1,9 @@
 /testdata
 scratch.py
 *__pycache_*
-*.json
 *.sqlite
 celerybeat-schedule
-*.shedule
-data/beat.schedule
+*.schedule
 .env
 maindb.spbpro
+*parquet

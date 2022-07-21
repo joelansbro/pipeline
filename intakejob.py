@@ -23,7 +23,6 @@ def intakejob():
         .appName('inboundcollation')\
         .getOrCreate()
 
-    inboundDir = './data/stash/'
 
     jsonSchema = StructType([
     StructField("title", StringType(), False),
