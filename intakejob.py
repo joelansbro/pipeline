@@ -84,4 +84,4 @@ for file in all_files:
     pandas = df_app.toPandas()
     emptyDF = pd.concat([emptyDF, pandas])
 
-emptyDF.to_csv('./output/batch.csv', index=False)
+emptyDF.to_csv('data/collated/batch.csv', index=False)
