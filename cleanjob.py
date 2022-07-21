@@ -26,7 +26,6 @@ def cleanjob():
                 current_data.printSchema()
                 print("Parquet data is valid")
                 current_data.show(n=100,truncate=True)
-                # this show is currently broken, see stack trace below
                 print(current_data.count())
                 time.sleep(5)
                 print("Closing this Parquet")

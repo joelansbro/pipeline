@@ -1,52 +1,110 @@
 # runs after the cleaning job, will run NLP and extract keywords to then store into the SQLite database
-
+from ast import keyword
+from distutils.log import error
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
 import os
 import glob
 import time
 import sqlite3
 from config import SQLITE_DATABASE
 
-insert_test = """INSERT INTO "articles" 
-(rowid, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages, keywords) 
-VALUES 
-('{title}', '{author}', '{project}', '{date_published}', '{lead_image_url}', '{content}', '{next_page_url}', '{url}', '{domain}', '{excerpt}', '{word_count}', '{direction}', '{total_pages}', '{rendered_pages}', '{keywords}')"""
 
 def keywordjob():
     print("keywordjob is now running")
     
+    spark = SparkSession.Builder().master('local[*]')\
+        .appName('keywordjob')\
+        .getOrCreate()
+
     for root, dirs, files in os.walk('./data/cleaned/'):
-        files = glob.glob(os.path.join(root,'*.txt'))
-        for f in files:
-            print(f)
+        files = glob.glob(os.path.join(root,'*.parquet'))
+        try:
+            for f in files: # this has saved the single article down double, you need to iterate only once at a certain part
+                print(f)
+                current_data = spark.read.parquet(f)
+                # this may work for the time being but will 100% not work on larger datasets
+                row_list = current_data.collect()
+                for row in row_list:
+                    article = parquet_to_object(row)
+                    print(article.title)
+                    print(article.author)
+                    pass_to_sql(article)
+
+        except error:
+            print("Error occured ", error)
+
+def parquet_to_object(row):
+    print("Can I access the row in the first place lol:", row['title'])
     
-    time.sleep(10)
+    par_article = Article(
+        title=row['title'],
+        author=row['author'],
+        project=row['project'],
+        date_published=row['date_published'],
+        lead_image_url=row['lead_image_url'],
+        content=row['content'],
+        next_page_url=row['next_page_url'],
+        url=row['url'],
+        domain=row['domain'],
+        excerpt=row['excerpt'],
+        word_count=row['word_count'],
+        direction=row['direction'],
+        total_pages=row['total_pages'],
+        rendered_pages=row['rendered_pages'],
+    # last line here errors out of course because it doesnt exist
+    # keywords=row.__getitem__('keywords')
+    # so for the time being:
+        keywords = "test_keywords"
+    )
+    print(par_article.title)
+    print(par_article.author)
+    return par_article
 
-    with open('./data/keyword/keyword.txt','w') as f:
-        f.write('output of keywordjob.py')
 
+def pass_to_sql(article):
     try:
         sqliteConnection = sqlite3.connect(SQLITE_DATABASE)
         cursor = sqliteConnection.cursor()
         print("Connected to SQLite")
         # rowid will autogenerate an id for the given table, so we do not have to concern ourselves with creating one
+        print(insert_test.format(
+                title=article.title,
+                author=article.author,
+                project=article.project,
+                date_published=article.date_published,
+                lead_image_url=article.lead_image_url,
+                content=article.content,
+                next_page_url=article.next_page_url,
+                url=article.url,
+                domain=article.domain,
+                excerpt=article.excerpt,
+                word_count=article.word_count,
+                direction=article.direction,
+                total_pages=article.total_pages,
+                rendered_pages=article.rendered_pages,
+                keywords=article.keywords
+                ))
         count = cursor.execute(
             insert_test.format(
-                title="article_test",
-                author="Joel",
-                project="dev",
-                date_published="2022-05-04",
-                lead_image_url="https://google.com",
-                content="This is a test to ensure the SQLite connection works from the keywords jobs",
-                next_page_url="na",
-                url="https://joelansbro.com",
-                domain="not sure if this is like category or website",
-                excerpt="Test article",
-                word_count=20,
-                direction="right",
-                total_pages=1,
-                rendered_pages=1,
-                keywords="Python, Jupyter, SQLite"
+                title=article.title,
+                author=article.author,
+                project=article.project,
+                date_published=article.date_published,
+                lead_image_url=article.lead_image_url,
+                content=article.content,
+                next_page_url=article.next_page_url,
+                url=article.url,
+                domain=article.domain,
+                excerpt=article.excerpt,
+                word_count=article.word_count,
+                direction=article.direction,
+                total_pages=article.total_pages,
+                rendered_pages=article.rendered_pages,
+                keywords=article.keywords
                 ))
+                
         sqliteConnection.commit()
         print("Record inserted successfully into the SQLite Main Test Database for project", cursor.rowcount)
         cursor.close()
@@ -57,3 +115,50 @@ def keywordjob():
             if sqliteConnection:
                 sqliteConnection.close()
                 print("End connection to database")
+
+
+insert_test = """INSERT INTO "articles" 
+(rowid, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages, keywords) 
+VALUES 
+(NULL, '{title}', '{author}', '{project}', '{date_published}', '{lead_image_url}', '{content}', '{next_page_url}', '{url}', '{domain}', '{excerpt}', '{word_count}', '{direction}', '{total_pages}', '{rendered_pages}', '{keywords}')"""
+
+
+
+
+class Article():
+    def __init__(
+        self,
+        title,
+        author,
+        project,
+        date_published,
+        lead_image_url,
+        content,
+        next_page_url,
+        url,
+        domain,
+        excerpt,
+        word_count,
+        direction, 
+        total_pages,
+        rendered_pages,
+        keywords=None):
+        self.title = title
+        self.author = author
+        self.project = project
+        self.date_published = date_published
+        self.lead_image_url = lead_image_url
+        self.content = content
+        self.next_page_url = next_page_url
+        self.url = url
+        self.domain = domain
+        self.excerpt = excerpt
+        self.word_count = word_count
+        self.direction = direction
+        self.total_pages = total_pages
+        self.rendered_pages = rendered_pages
+        self.keywords = keywords
+
+
+# if __name__ == '__main__':
+#     keywordjob()
