@@ -7,9 +7,9 @@ import sqlite3
 from config import SQLITE_DATABASE
 
 insert_test = """INSERT INTO "articles" 
-(id, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages, keywords) 
+(rowid, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages, keywords) 
 VALUES 
-('{id}', '{title}', '{author}', '{project}', '{date_published}', '{lead_image_url}', '{content}', '{next_page_url}', '{url}', '{domain}', '{excerpt}', '{word_count}', '{direction}', '{total_pages}', '{rendered_pages}', '{keywords}')"""
+('{title}', '{author}', '{project}', '{date_published}', '{lead_image_url}', '{content}', '{next_page_url}', '{url}', '{domain}', '{excerpt}', '{word_count}', '{direction}', '{total_pages}', '{rendered_pages}', '{keywords}')"""
 
 def keywordjob():
     print("keywordjob is now running")
@@ -28,10 +28,9 @@ def keywordjob():
         sqliteConnection = sqlite3.connect(SQLITE_DATABASE)
         cursor = sqliteConnection.cursor()
         print("Connected to SQLite")
-
+        # rowid will autogenerate an id for the given table, so we do not have to concern ourselves with creating one
         count = cursor.execute(
             insert_test.format(
-                id=2,
                 title="article_test",
                 author="Joel",
                 project="dev",

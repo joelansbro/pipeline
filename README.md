@@ -28,13 +28,17 @@ Flask
 
 The inboundAPI is now currently activated via runjob.py within root, which triggers api.py:
 
-`py runjob.py`
+`py inboundAPI.py`
 
 In the end we will want a full script (perhaps a shell script) that activates all servers and ports
 
-Test script 
+Test API script 
 
 `py inboundAPI/testapi.py`
+
+Test Pipeline Task Queue
+
+`py testscheduler.py`
 
 TODO: Use marshmallow for json schema validation and serialisation
 
@@ -50,15 +54,17 @@ sqlbrowser
 
 `sqlitebrowser`
 
-Python 3.10
-Flask - micro web framework for REST API
-PySpark - multithreaded data processing
-Pandas - Data manipulation
-Numpy - for graphing
-matplotlib - graphing
-RabbitMQ - message broker - likely requires erlang to be installed also
-Celery - task management framework asynchronous task queue + scheduling
-SQLalchemy - for creating
-SpaCY for NLP jobs
+Technologies and Libraries:
+- Python 3.10
+- Flask - micro web framework for REST API
+- PySpark - multithreaded data processing
+- Pandas - Data manipulation
+- Numpy - for graphing
+- matplotlib - graphing
+- RabbitMQ - message broker - requires Erlang installation
+- Celery - task management framework asynchronous task queue + scheduling
+- sqlite3 - for DB connectivity
+- SpaCY for NLP jobs
+- PyArrow for parquet support
 
 just putting this here for reference in the future
