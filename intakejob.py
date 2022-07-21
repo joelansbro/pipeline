@@ -12,6 +12,7 @@ from pyspark.sql.types import *
 import glob
 import os
 import pandas as pd
+import time
 
 def intakejob():
 
@@ -67,7 +68,7 @@ def intakejob():
 
 
 
-
+    #  I may need to create a default schema file if I go with this method
     df_app = spark.read.schema(jsonSchema).json("./data/stash/1234.json", multiLine=True)
     pandas = df_app.toPandas()
     print(pandas)
@@ -80,5 +81,8 @@ def intakejob():
         print(df_app)
         pandas = df_app.toPandas()
         emptyDF = pd.concat([emptyDF, pandas])
+        time.sleep(10)
+        print("Added a new article to batch")
 
     emptyDF.to_csv('data/collated/batch.csv', index=False)
+    print("Exiting process now")
