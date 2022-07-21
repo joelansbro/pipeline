@@ -5,7 +5,7 @@ run with py api.py
 """
 
 from flask import Flask, request, jsonify
-from celeryBroker import saveJson
+from celeryBroker import saveJson, _chainfileprocessing
 import json
 
 app = Flask(__name__)
@@ -22,6 +22,13 @@ def add_article(uuid):
     json_without_slash = json.loads(parsed)
     saveJson.delay(json_without_slash, uuid)
     return uuid
+
+@app.route('/test_scheduler', methods=['GET'])
+def test_scheduler():
+    response = _chainfileprocessing.delay()
+    response = str(response)
+    return response
+
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0', debug=True)
