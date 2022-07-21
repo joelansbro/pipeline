@@ -40,9 +40,15 @@ TODO: Use marshmallow for json schema validation and serialisation
 
 -----
 
+SQL Debugging:
 
+SQLite CLI tool
 
+`sqlite3 <dbname>` 
 
+sqlbrowser
+
+`sqlitebrowser`
 
 Python 3.10
 Flask - micro web framework for REST API
