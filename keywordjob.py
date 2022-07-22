@@ -36,7 +36,6 @@ def keywordjob():
             print("Error occured ", error)
 
 def parquet_to_object(row):
-    print("Can I access the row in the first place lol:", row['title'])
     
     par_article = Article(
         title=row['title'],
