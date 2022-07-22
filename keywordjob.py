@@ -11,6 +11,25 @@ import sqlite3
 from config import SQLITE_DATABASE
 
 
+"""
+Currently this job outputs the same parquet information twice, the parquet input holds it twice.
+This is likely because of the way we are saving down the parquet in the previous step is via pysparks method
+however if we did it via pyarrow this may work better
+
+alternative would be to check the DB for duplicate rows given the project and title, before inserting the data
+"""
+
+def check_db_for_dupe(input):
+    """
+    input article.title, article.project
+    select statement to db:
+        where title = article.title and project = article.project
+        if so, pass
+        else, send article to pass_to_sql()
+
+    """
+    return True
+
 def keywordjob():
     print("keywordjob is now running")
     
