@@ -11,7 +11,8 @@ This path includes:
 - Data cleaning jobs that clean through the data prior to storage within the Database
 - Automation scripts to arrange the jobs
 
-Unsure of what language to write in, 
+Currently runs a task queue through different stages of jobs, before finally outputting over to an
+SQLite database
 
 Presentation Layer - inboundAPI and outboundAPI
 Business Logic Layer - processing > intakejob and reportjob

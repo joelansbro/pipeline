@@ -69,23 +69,6 @@ def pass_to_sql(article):
         cursor = sqliteConnection.cursor()
         print("Connected to SQLite")
         # rowid will autogenerate an id for the given table, so we do not have to concern ourselves with creating one
-        print(insert_test.format(
-                title=article.title,
-                author=article.author,
-                project=article.project,
-                date_published=article.date_published,
-                lead_image_url=article.lead_image_url,
-                content=article.content,
-                next_page_url=article.next_page_url,
-                url=article.url,
-                domain=article.domain,
-                excerpt=article.excerpt,
-                word_count=article.word_count,
-                direction=article.direction,
-                total_pages=article.total_pages,
-                rendered_pages=article.rendered_pages,
-                keywords=article.keywords
-                ))
         count = cursor.execute(
             insert_test.format(
                 title=article.title,
