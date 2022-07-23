@@ -24,13 +24,14 @@ broker = Celery(
 )
 
 @broker.task
-def saveJson(payload, uuid):
+def saveJson(payload):
     print(type(payload))
     data = json.dumps(payload)
     json_without_slash = json.loads(data)
-    with open ('./data/stash/{}.json'.format(parquet_name), 'w') as f:
+    filename = parquet_name()
+    with open ('./data/stash/{}.json'.format(filename), 'w') as f:
         json.dump(json_without_slash, f)
-    return "Saved down file {data}".format(data=data)
+    return "Saved down file {}".format(filename)
 
 
 # This and bundle() to test scheduling

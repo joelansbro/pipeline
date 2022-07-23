@@ -6,4 +6,5 @@ from datetime import datetime
 
 
 # Save down the file with a unique identifier
-parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
+def parquet_name():
+    return "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
