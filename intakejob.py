@@ -14,8 +14,8 @@ import pyarrow.parquet as pq
 import glob
 import os
 import pandas as pd
-import time, random
-from datetime import datetime
+import time
+from pipe_utils import parquet_name
 
 def intakejob():
 
@@ -51,7 +51,8 @@ def intakejob():
     def create_empty_dataframe():
         index = pd.Index([], name="id", dtype=int)
         # specify column name and data type 
-        columns = [('title', str),
+        columns = [ # need to add in here a unique identifier (optional, if none, SQLite will create one afterwards)
+               ('title', str),
                ('author', str),
                ('project', str),
                ('date_published', str),
@@ -86,10 +87,7 @@ def intakejob():
         time.sleep(10)
         print("Added a new article to batch")
 
-    # Save down the file with a unique identifier
-    parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
-
-    save_loc = 'data/collated/{}.parquet'.format(parquet_name)
+    save_loc = 'data/collated/{}.parquet'.format(parquet_name())
 
     save_down = pa.Table.from_pandas(emptyDF, preserve_index=False)
     pq.write_table(table=save_down, where=save_loc)

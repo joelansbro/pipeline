@@ -77,3 +77,28 @@ Technologies and Libraries:
 - SpaCY for NLP jobs
 - PyArrow for parquet support
 
+TODO: Wrap up dependencies within Docker
+
+------
+
+
+Schema for the SQLite database table 'articles':
+```
+	"id"	INTEGER NOT NULL UNIQUE,
+	"title"	TEXT NOT NULL,
+	"author"	TEXT NOT NULL,
+	"project"	TEXT NOT NULL,
+	"date_published"	TEXT,
+	"lead_image_url"	TEXT,
+	"content"	TEXT NOT NULL,
+	"next_page_url"	TEXT,
+	"url"	TEXT NOT NULL,
+	"domain"	TEXT,
+	"excerpt"	TEXT,
+	"word_count"	INTEGER,
+	"direction"	TEXT,
+	"total_pages"	INTEGER,
+	"rendered_pages"	TEXT,
+	"keywords"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+```

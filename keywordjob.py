@@ -17,6 +17,27 @@ This is likely because of the way we are saving down the parquet in the previous
 however if we did it via pyarrow this may work better
 
 alternative would be to check the DB for duplicate rows given the project and title, before inserting the data
+
+
+Here is 'articles' schema:
+	"id"	INTEGER NOT NULL UNIQUE,
+	"title"	TEXT NOT NULL,
+	"author"	TEXT NOT NULL,
+	"project"	TEXT NOT NULL,
+	"date_published"	TEXT,
+	"lead_image_url"	TEXT,
+	"content"	TEXT NOT NULL,
+	"next_page_url"	TEXT,
+	"url"	TEXT NOT NULL,
+	"domain"	TEXT,
+	"excerpt"	TEXT,
+	"word_count"	INTEGER,
+	"direction"	TEXT,
+	"total_pages"	INTEGER,
+	"rendered_pages"	TEXT,
+	"keywords"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+
 """
 
 def check_db_for_dupe(input):
