@@ -9,10 +9,13 @@ import jsonschema
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
+import pyarrow as pa
+import pyarrow.parquet as pq
 import glob
 import os
 import pandas as pd
-import time
+import time, random
+from datetime import datetime
 
 def intakejob():
 
@@ -20,7 +23,6 @@ def intakejob():
         .appName('inboundcollation')\
         .getOrCreate()
 
-    inboundDir = './data/stash/'
 
     jsonSchema = StructType([
     StructField("title", StringType(), False),
@@ -84,5 +86,14 @@ def intakejob():
         time.sleep(10)
         print("Added a new article to batch")
 
-    emptyDF.to_csv('data/collated/batch.csv', index=False)
+    # Save down the file with a unique identifier
+    parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
+
+    save_loc = 'data/collated/{}.parquet'.format(parquet_name)
+
+    save_down = pa.Table.from_pandas(emptyDF, preserve_index=False)
+    pq.write_table(table=save_down, where=save_loc)
+
     print("Exiting process now")
+    spark.stop()
+    time.sleep(5)
