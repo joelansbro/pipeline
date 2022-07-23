@@ -15,7 +15,7 @@ from celery import Celery, chain
 from celery.schedules import crontab
 from config import CELERY_BROKER, CELERY_BACKEND
 import intakejob, cleanjob, keywordjob
-
+from pipe_utils import parquet_name
 
 broker = Celery(
     broker=CELERY_BROKER,
@@ -28,7 +28,7 @@ def saveJson(payload, uuid):
     print(type(payload))
     data = json.dumps(payload)
     json_without_slash = json.loads(data)
-    with open ('./data/stash/{}.json'.format(uuid), 'w') as f:
+    with open ('./data/stash/{}.json'.format(parquet_name), 'w') as f:
         json.dump(json_without_slash, f)
     return "Saved down file {data}".format(data=data)
 
@@ -42,7 +42,7 @@ def setup_periodic_tasks(sender, **kwargs):
 def bundle():
     print("Bump")
 
-# Pipeline Entry Call
+# Pipeline Entry Call - want to eventually set this onto an hour schedule for instance
 @broker.task
 def _chainfileprocessing():
     response = chain( 

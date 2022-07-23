@@ -21,10 +21,11 @@ jsonText = {
     "rendered_pages":1
  }
 
-res = requests.post('http://localhost:5000/inbound/add_article/4567', json=jsonText)
+# res = requests.post('http://localhost:5000/inbound/add_article/4567', json=jsonText)
+res = requests.get('http://localhost:5000/check_inbound_schema')
 
 if res.ok:
-    print(res.json())
+    print(res._content)
 
 
 

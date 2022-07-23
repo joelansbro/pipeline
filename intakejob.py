@@ -14,8 +14,8 @@ import pyarrow.parquet as pq
 import glob
 import os
 import pandas as pd
-import time, random
-from datetime import datetime
+import time
+from pipe_utils import parquet_name
 
 def intakejob():
 
@@ -85,9 +85,6 @@ def intakejob():
         emptyDF = pd.concat([emptyDF, pandas])
         time.sleep(10)
         print("Added a new article to batch")
-
-    # Save down the file with a unique identifier
-    parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
 
     save_loc = 'data/collated/{}.parquet'.format(parquet_name)
 
