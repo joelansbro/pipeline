@@ -51,7 +51,8 @@ def intakejob():
     def create_empty_dataframe():
         index = pd.Index([], name="id", dtype=int)
         # specify column name and data type 
-        columns = [('title', str),
+        columns = [ # need to add in here a unique identifier (optional, if none, SQLite will create one afterwards)
+               ('title', str),
                ('author', str),
                ('project', str),
                ('date_published', str),

@@ -22,11 +22,11 @@ def add_article():
     parsed = json.dumps(content)
     json_without_slash = json.loads(parsed)
     schema_check = check_inbound_schema(json_without_slash)
-    if schema_check:
+    if schema_check == True:
         saveJson.delay(json_without_slash)
         return 'Saved down JSON'
     else:
-        return schema_check
+        return str(schema_check)
 
 @app.route('/test_scheduler', methods=['GET'])
 def test_scheduler():
@@ -38,6 +38,7 @@ def test_scheduler():
 def check_inbound_schema(payload):
     article_schema = Schema(
     {
+        Optional('rowid'):int,
         'title': str,
         'author': str,
         'project': str,
