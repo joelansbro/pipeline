@@ -87,7 +87,7 @@ def intakejob():
         time.sleep(10)
         print("Added a new article to batch")
 
-    save_loc = 'data/collated/{}.parquet'.format(parquet_name)
+    save_loc = 'data/collated/{}.parquet'.format(parquet_name())
 
     save_down = pa.Table.from_pandas(emptyDF, preserve_index=False)
     pq.write_table(table=save_down, where=save_loc)
