@@ -7,3 +7,5 @@ celerybeat-schedule
 .env
 maindb.spbpro
 *parquet
+__pycache__/celeryBroker.cpython-38.pyc
+__pycache__/config.cpython-38.pyc

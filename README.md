@@ -20,28 +20,37 @@ Persistence Layer - databaseConn > DAO
 
 -----
 
-runjob.py should start all related servers with their ports
-currently starts Flask api
+## Run Dev Environ
+
+`bash runjob.sh`
+
+
+-----
+
+### Celery Broker
+
+Celery is the task scheduler that sets the flow of data through various tasks and jobs. 
 
 `py -m celery --app celeryBroker worker --loglevel=INFO -B -s ./data/beat.schedule`
 
-Flask 
+### Flask 
 
 The inboundAPI is now currently activated via runjob.py within root, which triggers api.py:
 
 `py inboundAPI.py`
 
-In the end we will want a full script (perhaps a shell script) that activates all servers and ports
+----
 
-Test API script 
+### Test Scripts
 
-`py inboundAPI/testapi.py`
+This script will pass dummy data into the API
 
-Test Pipeline Task Queue
+`py testinboundapi.py`
+
+This script will activate the pipeline queue, processing json data from ./data/stash
 
 `py testscheduler.py`
 
-TODO: Use marshmallow for json schema validation and serialisation
 
 -----
 
@@ -68,4 +77,3 @@ Technologies and Libraries:
 - SpaCY for NLP jobs
 - PyArrow for parquet support
 
-just putting this here for reference in the future
