@@ -31,7 +31,11 @@ def cleanjob():
             comma_data = current_data\
                 .withColumn('content', regexp_replace("content","'","`"))\
                 .withColumn('excerpt', regexp_replace("excerpt","'","`"))\
-                .withColumn('title', regexp_replace("title","'","`"))
+                .withColumn('title', regexp_replace("title","'","`"))\
+                .withColumn('content', regexp_replace("content", "\n",""))\
+                .withColumn('content', regexp_replace("content", "<.+?>",""))
+                #.withColumn('content', regexp_replace("content","""<(?!\/?a(?=>|\s.*>))\/?.*?>""",""))\ # this takes all html but leaves the <a> refs
+                
             
             print(comma_data.count())
             print("Closing this Parquet")
