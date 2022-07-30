@@ -14,7 +14,13 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def homepage():
-    return "post JSON to endpoint localhost/inbound/add_article/uniqueID"
+    return """
+    InboundAPI
+    Hello! You have directed yourself via the browser to the inbound page!
+    You cannot (yet) use this page to submit articles for manipulation.
+    Instead, you must POST your data to the endpoint:
+    /inbound/add_article
+    """
 
 @app.route('/inbound/add_article', methods=['POST'])
 def add_article():
