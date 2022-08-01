@@ -1,13 +1,10 @@
 # Flask app to query a single article from ./data/maindb.sqlite
 
 from flask import Flask, jsonify
-from celeryBroker import saveJson, _chainfileprocessing
-from reportjob import select_report
+from celeryBroker import report_job
 from DAO import create_connection
 from config import SQLITE_DATABASE
 import sqlite3
-
-from reportjob import select_report
 
 app = Flask(__name__)
 
@@ -32,10 +29,9 @@ def homepage():
 @app.route('/outbound/get_report/<project>', methods=['GET'])
 def get_report(project: str):
     # may want to put this into celeryBroker at some ponint
-    report = select_report(
-        create_connection(),
-        project)
-    return report
+    report = report_job.delay(project)
+    print(report)
+    return 'report'
 
 @app.route('/outbound/get_article/<title>', methods=['GET'])
 def get_article(title):
