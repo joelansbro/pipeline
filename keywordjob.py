@@ -8,6 +8,9 @@ import os
 import glob
 import time
 import sqlite3
+import spacy
+from collections import Counter
+from string import punctuation
 from config import SQLITE_DATABASE
 
 
@@ -58,6 +61,9 @@ def keywordjob():
         .appName('keywordjob')\
         .getOrCreate()
 
+    nlp = spacy.load("en_core_web_sm")
+
+
     for root, dirs, files in os.walk('./data/cleaned/'):
         files = glob.glob(os.path.join(root,'*.parquet'))
         try:
@@ -66,17 +72,50 @@ def keywordjob():
                 current_data = spark.read.parquet(f)
                 # this may work for the time being but will 100% not work on larger datasets
                 row_list = current_data.collect()
+                
                 for row in row_list:
-                    article = parquet_to_object(row)
+
+                    keyword_list = generate_keywords(row, nlp)
+                    article = parquet_to_object(row, keyword_list)
                     print(article.title)
                     print(article.author)
+                    print(article.keywords)
                     pass_to_sql(article)
 
         except error:
             print("Error occured ", error)
 
-def parquet_to_object(row):
+
+def generate_keywords(row, nlp):
+    """Function gets the common words from the article content
     
+    Manages to do this by storing them in a list, and converting it
+    into a string for storage
+    """
+    keywords_output = set(get_hotwords(row['content'], nlp))
+    most_common_list = Counter(keywords_output).most_common(20)
+    # the most_common_list is a tuple, so I am harvesting the first element of the tuple
+    ready = []
+    for item in most_common_list:
+        ready.append(item[0])
+    keyword_list = ','.join(ready)
+    
+    return keyword_list
+
+def get_hotwords(text, nlp):
+    """NLP magic to gather keywords. """
+    result = []
+    pos_tag = ['PROPN', 'ADJ', 'NOUN', 'VERB'] 
+    doc = nlp(text.lower()) 
+    for token in doc:
+        if(token.text in nlp.Defaults.stop_words or token.text in punctuation):
+            continue
+        if(token.pos_ in pos_tag):
+            result.append(token.text)
+    return result
+
+def parquet_to_object(row, keyword_list):
+    """Takes parquet rows and creates objects to put into database"""
     par_article = Article(
         title=row['title'],
         author=row['author'],
@@ -95,10 +134,8 @@ def parquet_to_object(row):
     # last line here errors out of course because it doesnt exist
     # keywords=row.__getitem__('keywords')
     # so for the time being:
-        keywords = "test_keywords"
+        keywords = keyword_list
     )
-    print(par_article.title)
-    print(par_article.author)
     return par_article
 
 
@@ -136,7 +173,7 @@ def pass_to_sql(article):
     finally:
             if sqliteConnection:
                 sqliteConnection.close()
-                print("End connection to database")
+                print("End connection to database") # this is ending the connection after each write, with so many rows being written, should we be keeping this open?
 
 
 insert_test = """INSERT INTO "articles" 

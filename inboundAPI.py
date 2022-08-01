@@ -14,7 +14,13 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def homepage():
-    return "post JSON to endpoint localhost/inbound/add_article/uniqueID"
+    return """
+    InboundAPI
+    Hello! You have directed yourself via the browser to the inbound page!
+    You cannot (yet) use this page to submit articles for manipulation.
+    Instead, you must POST your data to the endpoint:
+    /inbound/add_article
+    """
 
 @app.route('/inbound/add_article', methods=['POST'])
 def add_article():
@@ -42,17 +48,17 @@ def check_inbound_schema(payload):
         'title': str,
         'author': str,
         'project': str,
-        Optional('date_published'): And(Or(str, int)), # check if actual proper date
-        Optional('lead_image_url'): str,
+        Optional('date_published'): And(Or(str, int, None)), # check if actual proper date
+        Optional('lead_image_url'): And(Or(str, None)),
         'content': str,
-        Optional('next_page_url'): str,
+        Optional('next_page_url'): And(Or(str, None)),
         'url': str,
-        Optional('domain'): str,
-        Optional('excerpt'): str,
-        Optional('word_count'): int,
-        Optional('direction'): str,
-        Optional('total_pages'): int,
-        Optional('rendered_pages'): int
+        Optional('domain'): And(Or(str, None)),
+        Optional('excerpt'): And(Or(str, None)),
+        Optional('word_count'): And(Or(int, None)),
+        Optional('direction'): And(Or(str, None)),
+        Optional('total_pages'): And(Or(int, None)),
+        Optional('rendered_pages'): And(Or(int, None))
     }
     )
     try:

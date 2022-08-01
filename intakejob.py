@@ -84,7 +84,7 @@ def intakejob():
         print(df_app)
         pandas = df_app.toPandas()
         emptyDF = pd.concat([emptyDF, pandas])
-        time.sleep(10)
+        time.sleep(1)
         print("Added a new article to batch")
 
     save_loc = 'data/collated/{}.parquet'.format(parquet_name())

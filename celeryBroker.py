@@ -14,7 +14,7 @@ import json
 from celery import Celery, chain
 from celery.schedules import crontab
 from config import CELERY_BROKER, CELERY_BACKEND
-import intakejob, cleanjob, keywordjob
+import intakejob, cleanjob, keywordjob, reportjob
 from pipe_utils import parquet_name
 
 broker = Celery(
@@ -33,6 +33,11 @@ def saveJson(payload):
         json.dump(json_without_slash, f)
     return "Saved down file {}".format(filename)
 
+@broker.task
+def report_job(report):
+    print('sent to celery')
+    response = reportjob.select_report(report)
+    return response
 
 # This and bundle() to test scheduling
 @broker.on_after_configure.connect
