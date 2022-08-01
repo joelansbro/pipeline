@@ -7,3 +7,22 @@
 # run steps are
 # intake - batching - preprocessing - keyword selection - store in SQLite - modelling - prediction/inference
 #                                                 our python script is here ^
+import sqlite3
+from sqlite3 import Error
+
+
+
+report_query = """
+SELECT * FROM articles where project = '{}'
+"""
+
+def select_report(conn, report):
+    cursor = conn.cursor()
+    cursor.execute(report_query.format(report))
+
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(row)
+    
+

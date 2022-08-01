@@ -2,11 +2,12 @@
 
 from flask import Flask, jsonify
 from celeryBroker import saveJson, _chainfileprocessing
+from reportjob import select_report
+from DAO import create_connection
 from config import SQLITE_DATABASE
-import time
 import sqlite3
-import json
-import subprocess
+
+from reportjob import select_report
 
 app = Flask(__name__)
 
@@ -28,6 +29,14 @@ def homepage():
 
     """
 
+@app.route('/outbound/get_report/<project>', methods=['GET'])
+def get_report(project: str):
+    # may want to put this into celeryBroker at some ponint
+    report = select_report(
+        create_connection(),
+        project)
+    return report
+
 @app.route('/outbound/get_article/<title>', methods=['GET'])
 def get_article(title):
     response = db_get_article(title)
@@ -35,10 +44,8 @@ def get_article(title):
 
 
 def db_get_article(title: str):
-    sqliteConnection = sqlite3.connect(SQLITE_DATABASE)
-    cursor = sqliteConnection.cursor()
+    cursor = create_connection()
     title = title.replace("%20", " ")
-    print("Connected to SQLite")
     response = cursor.execute(article_query.format(_title=title)).fetchone()
     print("Jobs a goodn")
     return jsonify(response)
