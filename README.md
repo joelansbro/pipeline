@@ -14,9 +14,14 @@ This path includes:
 Currently runs a task queue through different stages of jobs, before finally outputting over to an
 SQLite database
 
-Presentation Layer - inboundAPI and outboundAPI
-Business Logic Layer - processing > intakejob and reportjob
+Presentation Layer - inboundAPI and outboundAPI send jobs to celeryBroker
+Business Logic Layer - processing > intakejobs clean inbound articles, reportjob outputs generic reports
 Persistence Layer - databaseConn > DAO
+
+
+
+## Release Notes
+ - 0.0.1 - Minimum viable product - Pipeline can now fully intake articles and output a "Report Response" - not fully automated as of yet
 
 -----
 

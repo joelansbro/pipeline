@@ -28,7 +28,6 @@ def homepage():
 
 @app.route('/outbound/get_report/<project>', methods=['GET'])
 def get_report(project: str):
-    # may want to put this into celeryBroker at some ponint
     report = report_job.delay(project)
     print(report)
     return 'report'
