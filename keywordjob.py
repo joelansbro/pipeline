@@ -1,4 +1,3 @@
-# runs after the cleaning job, will run NLP and extract keywords to then store into the SQLite database
 from ast import keyword
 from distutils.log import error
 from pyspark.sql import SparkSession
@@ -14,77 +13,30 @@ from string import punctuation
 from config import SQLITE_DATABASE
 
 
-"""
-Currently this job outputs the same parquet information twice, the parquet input holds it twice.
-This is likely because of the way we are saving down the parquet in the previous step is via pysparks method
-however if we did it via pyarrow this may work better
-
-alternative would be to check the DB for duplicate rows given the project and title, before inserting the data
-
-
-Here is 'articles' schema:
-	"id"	INTEGER NOT NULL UNIQUE,
-	"title"	TEXT NOT NULL,
-	"author"	TEXT NOT NULL,
-	"project"	TEXT NOT NULL,
-	"date_published"	TEXT,
-	"lead_image_url"	TEXT,
-	"content"	TEXT NOT NULL,
-	"next_page_url"	TEXT,
-	"url"	TEXT NOT NULL,
-	"domain"	TEXT,
-	"excerpt"	TEXT,
-	"word_count"	INTEGER,
-	"direction"	TEXT,
-	"total_pages"	INTEGER,
-	"rendered_pages"	TEXT,
-	"keywords"	TEXT,
-	PRIMARY KEY("id" AUTOINCREMENT)
-
-"""
-
-def check_db_for_dupe(input):
-    """
-    input article.title, article.project
-    select statement to db:
-        where title = article.title and project = article.project
-        if so, pass
-        else, send article to pass_to_sql()
-
-    """
-    return True
-
 def keywordjob():
-    print("keywordjob is now running")
-    
+
     spark = SparkSession.Builder().master('local[*]')\
         .appName('keywordjob')\
         .getOrCreate()
 
     nlp = spacy.load("en_core_web_sm")
+    try:
 
+        current_data = spark.read.option("header","true").option("recursiveFileLookup","true").parquet("./data/cleaned")
 
-    for root, dirs, files in os.walk('./data/cleaned/'):
-        files = glob.glob(os.path.join(root,'*.parquet'))
-        try:
-            for f in files: # this has saved the single article down double, you need to iterate only once at a certain part
-                print(f)
-                current_data = spark.read.parquet(f)
-                # this may work for the time being but will 100% not work on larger datasets
-                row_list = current_data.collect()
-                
-                for row in row_list:
+        current_data.show()
+        row_list = current_data.collect()
 
-                    keyword_list = generate_keywords(row, nlp)
-                    article = parquet_to_object(row, keyword_list)
-                    print(article.title)
-                    print(article.author)
-                    print(article.keywords)
-                    pass_to_sql(article)
+        for row in row_list:
+            keyword_list = generate_keywords(row, nlp)
+            article = parquet_to_object(row, keyword_list)
+            print(article.title)
+            print(article.author)
+            print(article.keywords)
+            pass_to_sql(article)
 
-        except error:
-            print("Error occured ", error)
-
+    except error:
+        print("Error occured", error)
 
 def generate_keywords(row, nlp):
     """Function gets the common words from the article content
@@ -217,6 +169,7 @@ class Article():
         self.total_pages = total_pages
         self.rendered_pages = rendered_pages
         self.keywords = keywords
+
 
 
 # if __name__ == '__main__':

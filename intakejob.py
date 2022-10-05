@@ -46,7 +46,11 @@ def intakejob():
     for root, dirs, files in os.walk('./data/stash/'):
         files = glob.glob(os.path.join(root,'*.json'))
         for f in files:
-            all_files.append(os.path.abspath(f))
+            if f == './data/stash/schema.json':
+                print('found schema. passing...')
+                continue
+            else:
+                all_files.append(os.path.abspath(f))
 
     def create_empty_dataframe():
         index = pd.Index([], name="id", dtype=int)
@@ -72,7 +76,7 @@ def intakejob():
 
 
     #  I may need to create a default schema file if I go with this method
-    df_app = spark.read.schema(jsonSchema).json("./data/stash/1234.json", multiLine=True)
+    df_app = spark.read.schema(jsonSchema).json("./data/stash/schema.json", multiLine=True)
     pandas = df_app.toPandas()
     print(pandas)
 
@@ -95,3 +99,7 @@ def intakejob():
     print("Exiting process now")
     spark.stop()
     time.sleep(5)
+
+
+# if __name__ == '__main__':
+#     intakejob()

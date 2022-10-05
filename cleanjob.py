@@ -17,6 +17,8 @@ def cleanjob():
         .appName('cleanjob')\
         .getOrCreate()
 
+    spark.conf.set("mapreduce.fileoutputcommitter.marksuccessfuljobs", "false")
+
     print("cleanjob is now running")
     # for root, dirs, files in os.walk('./data/collated/'):
     #     file = glob.glob(os.path.join(root,'*.parquet'))
@@ -43,7 +45,7 @@ def cleanjob():
             parquet_name = "{:%Y%m%d%H%M}00".format(datetime.now()) + str(random.randint(1,10000))
             save_loc = 'data/cleaned/{}.parquet'.format(parquet_name)
                 
-            comma_data.write.parquet(save_loc)
+            comma_data.coalesce(1).write.parquet(save_loc)
             time.sleep(2)
                 
     except error:
@@ -53,3 +55,6 @@ def cleanjob():
     
     spark.stop()
     time.sleep(5)
+
+# if __name__ == '__main__':
+#     cleanjob()
