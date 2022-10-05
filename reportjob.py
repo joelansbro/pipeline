@@ -16,7 +16,7 @@ SELECT keywords FROM articles where project = '{}'
 def select_report(report):
     """
     This is a very basic report that is returned - it searches through the keywords 
-    between all articles in the reports and returns the five most common keywords
+    between all articles in the reports and returns the twenty most common keywords
     in all reports.
 
     A very basic task to demonstrate the MVP of the pipeline
@@ -34,6 +34,7 @@ def select_report(report):
             keyword_list.append(key)
 
     frequency_dict = {i:keyword_list.count(i) for i in keyword_list}
-    most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)[:5]
+    twenty_most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)[:20]
+    most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)
 
     return most_common

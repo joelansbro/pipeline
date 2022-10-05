@@ -172,5 +172,5 @@ class Article():
 
 
 
-# if __name__ == '__main__':
-#     keywordjob()
+if __name__ == '__main__':
+    keywordjob()
