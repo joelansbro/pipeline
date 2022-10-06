@@ -1,9 +1,11 @@
 import requests
+from pipe_utils import parquet_name
 
-
-project = "Data_Science"
+project = "None"
 
 res = requests.get('http://localhost:5050/outbound/get_report/{}'.format(project))
 
 if res.ok:
-    print(res.content)
+    output_name = '{}.csv'.format(parquet_name())
+    with open(output_name, "w") as csv_file:
+        csv_file.write(str(res.content))

@@ -22,10 +22,13 @@ Persistence Layer - databaseConn > DAO
 
 ## Release Notes
  - 0.0.1 - Minimum viable product - Pipeline can now fully intake articles and output a "Report Response" - not fully automated as of yet
+ - 0.0.2 - Improved data cleaning of artifacts. Fixed duplicate rows. Can now generate csv files of most common keywords per project. 
 
 -----
 
 ## Run Dev Environ
+
+The following script will run the whole pipeline, including required endpoints
 
 `bash runjob.sh`
 
@@ -40,9 +43,7 @@ Celery is the task scheduler that sets the flow of data through various tasks an
 
 ### Flask 
 
-The inboundAPI is now currently activated via runjob.py within root, which triggers api.py:
-
-`py inboundAPI.py`
+The inbound and outbound API are generated from their respective py files. However, it is recommended to run the bash script to start both
 
 ----
 
@@ -56,6 +57,9 @@ This script will activate the pipeline queue, processing json data from ./data/s
 
 `py testscheduler.py`
 
+This script will generate a request for data against the 'None' default group. It will output a csv file in the local folder:
+
+`py testreport.py`
 
 -----
 
