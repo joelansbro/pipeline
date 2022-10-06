@@ -1,7 +1,7 @@
 # Flask app to query a single article from ./data/maindb.sqlite
 
 from flask import Flask, jsonify
-from celeryBroker import report_job
+from celeryBroker import report_job, result
 from DAO import create_connection
 from config import SQLITE_DATABASE
 import time
@@ -30,7 +30,9 @@ def homepage():
 @app.route('/outbound/get_report/<project>', methods=['GET'])
 def get_report(project: str):
     report = report_job.delay(project)
-    return "I cba finding out right now how to return the celery result"
+
+    output = result.AsyncResult(report.id)
+    return output.get()
 
 @app.route('/outbound/get_article/<title>', methods=['GET'])
 def get_article(title):

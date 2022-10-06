@@ -37,4 +37,6 @@ def select_report(report):
     twenty_most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)[:20]
     most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)
 
-    return most_common
+    most_common_string = ','.join(most_common)
+
+    return most_common_string

@@ -11,7 +11,7 @@ py -m celery --app celeryBroker flower
 """
 
 import json
-from celery import Celery, chain
+from celery import Celery, chain, result
 from celery.schedules import crontab
 from config import CELERY_BROKER, CELERY_BACKEND
 import intakejob, cleanjob, keywordjob, reportjob
