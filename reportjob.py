@@ -7,24 +7,34 @@
 # run steps are
 # intake - batching - preprocessing - keyword selection - store in SQLite - modelling - prediction/inference
 #                                                 our python script is here ^
-import sqlite3
-from sqlite3 import Error
 from DAO import create_connection
 
 report_query = """
-SELECT * FROM articles where project = '{}'
+SELECT keywords FROM articles where project = '{}'
 """
 
 def select_report(report):
+    """
+    This is a very basic report that is returned - it searches through the keywords 
+    between all articles in the reports and returns the twenty most common keywords
+    in all reports.
+
+    A very basic task to demonstrate the MVP of the pipeline
+    """
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute(report_query.format(report))
 
     rows = cursor.fetchall()
 
+    keyword_list = []
     for row in rows:
-        print(row)
+        keywords = row[0].split(",")
+        for key in keywords:
+            keyword_list.append(key)
 
-    return str(rows)
-    
+    frequency_dict = {i:keyword_list.count(i) for i in keyword_list}
+    twenty_most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)[:20]
+    most_common = sorted(frequency_dict, key=frequency_dict.get, reverse=True)
 
+    return most_common
