@@ -44,11 +44,11 @@ def cleanjob():
 
             # To fix this - untested
             # if the end url route is longer than the title of the article, replace with the end route
-            replaced_title = word_counted\
-                .withColumn("title", 
-                    when((length("title") > length(split("url","/")[-1])), "route").otherwise(col("title")))
+            # replaced_title = word_counted\
+            #     .withColumn("title", 
+            #         when((length("title") > length(split("url","/")[-1])), "route").otherwise(col("title")))
 
-            replaced_title.show(n=100,truncate=True)
+            word_counted.show(n=100,truncate=True)
             print(word_counted.count())
             print("Closing this Parquet")
                 
@@ -65,11 +65,6 @@ def cleanjob():
     
     spark.stop()
     time.sleep(5)
-
-
-
-
-
 
 if __name__ == '__main__':
     cleanjob()
