@@ -12,6 +12,32 @@ from collections import Counter
 from string import punctuation
 from config import SQLITE_DATABASE
 
+"""
+The keyword job takes in the content column for each article and surmises what the unique keywords are for each.
+It then saves this down as another column, keywords.
+
+Then finally, it will open a database connection an insert the article into a new row. (TODO: Add this into a separate folder within the pipeline?)
+
+
+Here is 'articles' schema:
+	"id"	INTEGER NOT NULL UNIQUE,
+	"title"	TEXT NOT NULL,
+	"author"	TEXT NOT NULL,
+	"project"	TEXT NOT NULL,
+	"date_published"	TEXT,
+	"lead_image_url"	TEXT,
+	"content"	TEXT NOT NULL,
+	"next_page_url"	TEXT,
+	"url"	TEXT NOT NULL,
+	"domain"	TEXT,
+	"excerpt"	TEXT,
+	"word_count"	INTEGER,
+	"direction"	TEXT,
+	"total_pages"	INTEGER,
+	"rendered_pages"	TEXT,
+	"keywords"	TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+"""
 
 def keywordjob():
 
