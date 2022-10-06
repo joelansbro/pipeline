@@ -11,6 +11,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import *
 import pyarrow as pa
 import pyarrow.parquet as pq
+from w3lib.html import replace_entities
 import glob
 import os
 import pandas as pd
@@ -91,8 +92,10 @@ def intakejob():
         time.sleep(1)
         print("Added a new article to batch")
 
-    save_loc = 'data/collated/{}.parquet'.format(parquet_name())
+    emptyDF['content'] = emptyDF.apply(lambda row : replace_entities(row['content']), axis = 1)
+    print("html entity replacement has been applied to all rows in content")
 
+    save_loc = 'data/collated/{}.parquet'.format(parquet_name())
     save_down = pa.Table.from_pandas(emptyDF, preserve_index=False)
     pq.write_table(table=save_down, where=save_loc)
 
@@ -101,5 +104,5 @@ def intakejob():
     time.sleep(5)
 
 
-# if __name__ == '__main__':
-#     intakejob()
+if __name__ == '__main__':
+    intakejob()
