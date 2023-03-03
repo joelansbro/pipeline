@@ -1,4 +1,5 @@
 /testdata
+/.venv
 scratch.py
 *__pycache_*
 *.sqlite
