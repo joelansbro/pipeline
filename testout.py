@@ -3,10 +3,10 @@
 import requests
 import json
 
-title = "From Python to Numpy"
+title = "8 Reasons Python Sucks"
 title = title.replace(" ", "%20")
 
-res = requests.get('http://localhost:5050/outbound/get_article/{}'.format(title))
+res = requests.get('http://localhost:5000/outbound/get_article/{}'.format(title))
 
 if res.ok:
     print(res.content)

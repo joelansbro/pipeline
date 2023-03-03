@@ -3,7 +3,7 @@ from pipe_utils import parquet_name
 
 project = "None"
 
-res = requests.get('http://localhost:5050/outbound/get_report/{}'.format(project))
+res = requests.get('http://localhost:5000/outbound/get_report/{}'.format(project))
 
 if res.ok:
     output_name = '{}.csv'.format(parquet_name())
