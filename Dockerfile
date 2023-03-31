@@ -17,8 +17,7 @@ COPY ./intakejob.py .
 COPY ./keywordjob.py .
 COPY ./pipe_utils.py .
 COPY ./reportjob.py .
+COPY ./runjob.sh .
+COPY ./data/beat.schedule .
 
-CMD ["python3", "API.py"]
-
-
-
+CMD ["bash", "runjob.sh"]
