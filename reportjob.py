@@ -6,8 +6,6 @@ from pyspark.sql.types import *
 from functools import partial
 import tldextract
 import re
-import language_tool_python as ltp
-import spacy
 
 """[
     id: int, 
@@ -70,9 +68,7 @@ def select_report(report):
     The analysis jobs for the time being can append new columns onto the data and then output to csv format.
     """
 
-    lang_tool = ltp.LanguageTool('en-US')
-    nlp = spacy.load("en_core_web_sm")
-
+    # I've been reading that I shouldnt be committing jars to the repo but that's okay for now
     spark = SparkSession.Builder().master('local[*]')\
         .appName('keywordjob')\
         .config(
