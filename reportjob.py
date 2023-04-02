@@ -1,11 +1,14 @@
-import os
-
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
-from pyspark.sql.types import *
-from functools import partial
+import sqlite3
+import pandas as pd
+import enchant
 import tldextract
+import numpy as np
+import nltk # uses punkt
+import itertools
+from textstat import flesch_reading_ease, gunning_fog
 import re
+
+"""I may have to use pandas instead to construct this nlp job."""
 
 """[
     id: int, 
@@ -25,7 +28,40 @@ import re
     rendered_pages: string, 
     keywords: string
     ]
+
+    We have a lot of things we could take from textstat as well:
+    textstat.flesch_reading_ease(test_data)
+    textstat.flesch_kincaid_grade(test_data)
+    textstat.smog_index(test_data)
+    textstat.coleman_liau_index(test_data)
+    textstat.automated_readability_index(test_data)
+    textstat.dale_chall_readability_score(test_data)
+    textstat.difficult_words(test_data)
+    textstat.linsear_write_formula(test_data)
+    textstat.gunning_fog(test_data)
+    textstat.text_standard(test_data)
+    textstat.fernandez_huerta(test_data)
+    textstat.szigriszt_pazos(test_data)
+    textstat.gutierrez_polini(test_data)
+    textstat.crawford(test_data)
+    textstat.gulpease_index(test_data)
+    textstat.osman(test_data)
 """
+# create a dictionary object for the English language
+english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
+
+
+"""NLP Functions"""
+
+def count_spelling_mistakes(sentence):
+    """Function to count the number of spelling mistakes in a string"""
+    num_misspelled = sum([not english_dict.check(word.lower()) for word in sentence])
+    return num_misspelled
+
+def add_reading_scores(df):
+    df['flesch_reading_ease'] = df.apply(lambda row: flesch_reading_ease(row['content']), axis=1)
+    df['gunning_fog'] = df.apply(lambda row: gunning_fog(row['content']), axis=1)    
+    return df
 
 def reputable_source(url: str):
     """Checks if the blog article is from a reputable source.
@@ -48,55 +84,45 @@ def reputable_source(url: str):
     
     return points
 
-def reading_score(exploded_content: DataFrame):
-    """This function is supposed to return a dataframe with the readability scores attached."""
-
-    """ Double-check this code, I don't think it calculates these scores correctly."""
-    readable_df = exploded_content.withColumn("flesch_reading_ease", size("words") / size("sentences"))\
-        .withColumn("gunning_fog_index", 2 * size("sentences") / size("sentences") + 12)
-    
-    return readable_df
 
 
-"""Register UDFs"""
-is_reputable_udf = udf(reputable_source, IntegerType())
-    
-def select_report(report):
+def select_report(report: str):
     """
     This job gets all article rows from the sqlite DB and analyses the data.
 
     The analysis jobs for the time being can append new columns onto the data and then output to csv format.
     """
+    
+    try:
+        # connect to the SQLite database
+        conn = sqlite3.connect('./data/maindb.sqlite')
+        df = pd.read_sql_query(
+            "SELECT * FROM articles WHERE project = '{}'".format(report),
+            conn
+            )
+    except sqlite3.Error as er:
+        print('SQLite error: %s' % (' '.join(er.args)))
+        print("Exception class is: ", er.__class__)
+    conn.close()
 
-    # I've been reading that I shouldnt be committing jars to the repo but that's okay for now
-    spark = SparkSession.Builder().master('local[*]')\
-        .appName('keywordjob')\
-        .config(
-        'spark.jars', 
-        '{}/sqlite-jdbc-3.34.0.jar'.format(os.getcwd())
-        )\
-        .config(
-        'spark.driver.extraClassPath',
-        '{}/sqlite-jdbc-3.34.0.jar'.format(os.getcwd())
-        )\
-        .getOrCreate()
-
-    """Load in the dataframe and split the content for analysis"""
-    articles = spark.read.format("jdbc")\
-        .options(url ="jdbc:sqlite:./data/maindb.sqlite", dbtable="articles")\
-        .load()\
-        .withColumn("sentences", sentences("content"))\
-        .withColumn("words", flatten("sentences"))
+    df['sentences'] = df['content'].apply(nltk.sent_tokenize)
+    df['words'] = df['sentences'].apply(lambda s: list(itertools.chain.from_iterable([nltk.word_tokenize(sentence) for sentence in s])))
     
 
-    """Create statistics for the credibility score"""
-    reputable_df = articles.withColumn('reputable_source', is_reputable_udf('url'))\
+    # NLP operations
+    df['num_spelling_mistakes'] = df['words'].apply(
+        lambda sentence_list: sum([
+            count_spelling_mistakes(sentence) for sentence in sentence_list]))
 
-    readability_df = reading_score(reputable_df)
+    df['source_reputation'] = df['url'].apply(reputable_source)
 
-    """Output the dataframe"""
-    output_df = readability_df.select('title','reputable_source','flesch_reading_ease','gunning_fog_index')
-    output_df.write.option("header",True).mode('overwrite').csv('./data/output/report')
+    df = add_reading_scores(df)
+
+
+    # outputs a dataframe
+    df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog']]
+    df_selected.to_csv('./data/output/report/output.csv')
+
 
 if __name__=='__main__':
     select_report('None')
