@@ -7,9 +7,14 @@ import nltk # uses punkt
 import itertools
 from textstat import flesch_reading_ease, gunning_fog
 import re
+
+import statistics
+
 import spacy
 from spacy_arguing_lexicon import ArguingLexiconParser
 from spacy.language import Language
+from spacytextblob.spacytextblob import SpacyTextBlob
+
 
 """[
     id: int, 
@@ -44,6 +49,7 @@ def CreateArguingLexiconParser(nlp, name, lang):
     return ArguingLexiconParser()
 
 nlp.add_pipe("ArguingLexiconParser")
+nlp.add_pipe("spacytextblob")
 
 """NLP Functions"""
 
@@ -97,6 +103,54 @@ def arg_mining(df):
     return df
 
 
+def sentiment_analysis_udf(nlp, content, keywords):
+    doc = nlp(content)
+
+    content_polarity = doc._.blob.polarity
+    content_subjectivity = doc._.blob.subjectivity
+
+    # now get keyword sentiment
+
+    key_sentiments_list = []
+    # split each keyword into a separate sentence to analyse
+    # rounding keywords due to their importance to the text
+    keyword_list = keywords.split(',')
+    for keyword in keyword_list:
+        doc = nlp(keyword)
+        if doc._.blob.polarity > 0:
+            key_polarity = -1
+        elif doc._.blob.polarity == 0:
+            key_polarity = doc._.blob.polarity
+        else:
+            key_polarity = 1
+        key_sentiments_list.append(key_polarity)
+
+    # bias keywords in sentiment analysis
+    keyword_total_score = statistics.mean(key_sentiments_list)
+
+    ensemble_sentiment_score = statistics.mean([
+        content_polarity, keyword_total_score, keyword_total_score
+        ])
+    
+    if ensemble_sentiment_score >= 0.0:
+        sentiment = 'POSITIVE'
+    else:
+        sentiment = 'NEGATIVE'
+
+    return pd.Series(
+        [
+            ensemble_sentiment_score,
+            content_subjectivity,
+            sentiment
+        ]
+    )
+
+def sentiment_analysis(df):
+    df[['polarity','subjectivity','sentiment']] = df.apply(
+        lambda row: sentiment_analysis_udf(nlp, row['content'], row['keywords']), axis=1)
+    return df
+
+
 def select_report(report: str):
     """
     This job gets all article rows from the sqlite DB and analyses the data.
@@ -134,9 +188,26 @@ def select_report(report: str):
     print("Parsing arguments")
     df = arg_mining(df)
 
+    print("Getting Sentiment")
+    df = sentiment_analysis(df)
+
     print("All done! Saving...")
     # outputs a dataframe
-    df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog','num_of_arg_phrases']]
+    df_selected = df[[
+        'title',
+        'keywords',
+        'author',
+        'project',
+        'url',
+        'num_spelling_mistakes',
+        'source_reputation',
+        'flesch_reading_ease',
+        'gunning_fog',
+        'num_of_arg_phrases',
+        'polarity',
+        'subjectivity',
+        'sentiment'
+        ]]
     df_selected.to_csv('../data/output/report/output.csv')
 
 
