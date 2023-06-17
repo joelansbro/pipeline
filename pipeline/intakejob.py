@@ -14,6 +14,9 @@ import glob
 import os
 import pandas as pd
 import time
+
+import sys
+sys.path.append('../misc/')
 from pipe_utils import parquet_name
 
 def intakejob():

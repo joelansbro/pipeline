@@ -8,8 +8,12 @@ import sqlite3
 import spacy
 from collections import Counter
 from string import punctuation, digits
-from config import SQLITE_DATABASE
 import re
+
+import sys
+sys.path.append('../misc/')
+from config import SQLITE_DATABASE
+
 
 """
 The keyword job takes in the content column for each article and surmises what the unique keywords are for each.
@@ -38,30 +42,7 @@ Here is 'articles' schema:
 	PRIMARY KEY("id" AUTOINCREMENT)
 """
 
-def keywordjob():
 
-    spark = SparkSession.Builder().master('local[*]')\
-        .appName('keywordjob')\
-        .getOrCreate()
-
-    nlp = spacy.load("en_core_web_sm")
-    try:
-
-        current_data = spark.read.option("header","true").option("recursiveFileLookup","true").parquet("./data/cleaned")
-
-        current_data.show()
-        row_list = current_data.collect()
-
-        for row in row_list:
-            keyword_list = generate_keywords(row, nlp)
-            article = parquet_to_object(row, keyword_list)
-            print(article.title)
-            print(article.author)
-            print(article.keywords)
-            pass_to_sql(article)
-
-    except error:
-        print("Error occured", error)
 
 def generate_keywords(row, nlp):
     """Function gets the common words from the article content
@@ -176,14 +157,78 @@ def pass_to_sql(article):
     finally:
             if sqliteConnection:
                 sqliteConnection.close()
-                print("End connection to database") # this is ending the connection after each write, with so many rows being written, should we be keeping this open?
+                print("End connection to database")
 
+
+def table_check():
+    """Ensures that the table exists and has the correct schema"""
+    try:
+        sqliteConnection = sqlite3.connect(SQLITE_DATABASE)
+        cursor = sqliteConnection.cursor()
+        cursor.execute(create_table)
+        sqliteConnection.commit()
+        cursor.close()
+    except sqlite3.Error as error:
+        print("didnt work", error)
+    finally:
+        if sqliteConnection:
+            sqliteConnection.close()
+            print("Checked table schema is present")
 
 insert_test = """INSERT INTO "articles" 
 (rowid, title, author, project, date_published, lead_image_url, content, next_page_url, url, domain, excerpt, word_count, direction, total_pages, rendered_pages, keywords) 
 VALUES 
 (NULL, '{title}', '{author}', '{project}', '{date_published}', '{lead_image_url}', '{content}', '{next_page_url}', '{url}', '{domain}', '{excerpt}', '{word_count}', '{direction}', '{total_pages}', '{rendered_pages}', '{keywords}')"""
 
+create_table = """
+CREATE TABLE IF NOT EXISTS articles 
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    project TEXT NOT NULL,
+    date_published TEXT,
+    lead_image_url TEXT,
+    content TEXT NOT NULL,
+    next_page_url TEXT,
+    url TEXT NOT NULL,
+    domain TEXT,
+    excerpt TEXT,
+    word_count INTEGER,
+    direction TEXT,
+    total_pages INTEGER,
+    rendered_pages TEXT,
+    keywords TEXT
+
+)
+"""
+
+def keywordjob():
+
+    spark = SparkSession.Builder().master('local[*]')\
+        .appName('keywordjob')\
+        .getOrCreate()
+
+    nlp = spacy.load("en_core_web_sm")
+    try:
+
+        current_data = spark.read.option("header","true").option("recursiveFileLookup","true").parquet("./data/cleaned")
+
+        current_data.show()
+        row_list = current_data.collect()
+
+        table_check()
+
+        for row in row_list:
+            keyword_list = generate_keywords(row, nlp)
+            article = parquet_to_object(row, keyword_list)
+            print(article.title)
+            print(article.author)
+            print(article.keywords)
+            pass_to_sql(article)
+
+    except error:
+        print("Error occured", error)
 
 class Article():
     def __init__(

@@ -16,6 +16,9 @@ from schema import Schema, And, Use, Optional, SchemaError, Or
 import json
 
 from celeryBroker import report_job, saveJson, _chainfileprocessing, result
+
+import sys
+sys.path.append('./misc/')
 from DAO import create_connection
 
 

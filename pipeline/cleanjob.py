@@ -5,12 +5,15 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import *
 import pyarrow as pa
 import pyarrow.parquet as pq
-from pipe_utils import parquet_name, entity_UDF
 from datetime import datetime
 import random
 import os
 import glob
 import time
+
+import sys
+sys.path.append('../misc/')
+from pipe_utils import parquet_name, entity_UDF
 
 def cleanjob():
 
