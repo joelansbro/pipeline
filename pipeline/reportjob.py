@@ -7,7 +7,9 @@ import nltk # uses punkt
 import itertools
 from textstat import flesch_reading_ease, gunning_fog
 import re
-
+import spacy
+from spacy_arguing_lexicon import ArguingLexiconParser
+from spacy.language import Language
 
 """[
     id: int, 
@@ -29,9 +31,19 @@ import re
     ]
 
 """
+
+"""Set Up NLP Models"""
 # create a dictionary object for the English language
 english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
 
+# Create the spacy nlp pipeline
+nlp = spacy.load("en_core_web_sm")
+
+@Language.factory("ArguingLexiconParser", default_config={"lang":nlp.lang})
+def CreateArguingLexiconParser(nlp, name, lang):
+    return ArguingLexiconParser()
+
+nlp.add_pipe("ArguingLexiconParser")
 
 """NLP Functions"""
 
@@ -66,6 +78,24 @@ def reputable_source(url: str):
     
     return points
 
+def arg_mining_udf(nlp, sentences):
+    """UDF for arg_mining column"""
+    total_count = 0
+
+    for sentence in sentences:
+        try:
+            doc = nlp(sentence)
+            argument_span = next(doc._.arguments.get_argument_spans())
+            total_count += len(argument_span)
+        except StopIteration:
+            continue
+    print(total_count)
+    return total_count
+
+def arg_mining(df):
+    df['num_of_arg_phrases'] = df.apply(lambda row: arg_mining_udf(nlp, row['sentences']), axis=1)
+    return df
+
 
 def select_report(report: str):
     """
@@ -91,17 +121,22 @@ def select_report(report: str):
     
 
     # NLP operations
+    print("Counting spelling mistakes")
     df['num_spelling_mistakes'] = df['words'].apply(
         lambda sentence_list: sum([
             count_spelling_mistakes(sentence) for sentence in sentence_list]))
-
+    print("Checking source of articles")
     df['source_reputation'] = df['url'].apply(reputable_source)
 
+    print("Parsing readability scores")
     df = add_reading_scores(df)
 
+    print("Parsing arguments")
+    df = arg_mining(df)
 
+    print("All done! Saving...")
     # outputs a dataframe
-    df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog']]
+    df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog','num_of_arg_phrases']]
     df_selected.to_csv('../data/output/report/output.csv')
 
 
