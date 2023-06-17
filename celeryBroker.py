@@ -9,13 +9,22 @@ flower is installed to monitor the workflow
 py -m celery --app celeryBroker flower
 
 """
+import sys
+sys.path.append('./misc')
+sys.path.append('./pipeline')
 
 import json
 from celery import Celery, chain, result
 from celery.schedules import crontab
+
 from config import CELERY_BROKER, CELERY_BACKEND
-import intakejob, cleanjob, keywordjob, reportjob
 from pipe_utils import parquet_name
+
+import cleanjob as cleanjob 
+import intakejob as intakejob
+import keywordjob as keywordjob 
+import reportjob as reportjob
+
 
 broker = Celery(
     broker=CELERY_BROKER,
