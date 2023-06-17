@@ -8,7 +8,6 @@ import itertools
 from textstat import flesch_reading_ease, gunning_fog
 import re
 
-"""I may have to use pandas instead to construct this nlp job."""
 
 """[
     id: int, 
@@ -29,23 +28,6 @@ import re
     keywords: string
     ]
 
-    We have a lot of things we could take from textstat as well:
-    textstat.flesch_reading_ease(test_data)
-    textstat.flesch_kincaid_grade(test_data)
-    textstat.smog_index(test_data)
-    textstat.coleman_liau_index(test_data)
-    textstat.automated_readability_index(test_data)
-    textstat.dale_chall_readability_score(test_data)
-    textstat.difficult_words(test_data)
-    textstat.linsear_write_formula(test_data)
-    textstat.gunning_fog(test_data)
-    textstat.text_standard(test_data)
-    textstat.fernandez_huerta(test_data)
-    textstat.szigriszt_pazos(test_data)
-    textstat.gutierrez_polini(test_data)
-    textstat.crawford(test_data)
-    textstat.gulpease_index(test_data)
-    textstat.osman(test_data)
 """
 # create a dictionary object for the English language
 english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
@@ -85,7 +67,6 @@ def reputable_source(url: str):
     return points
 
 
-
 def select_report(report: str):
     """
     This job gets all article rows from the sqlite DB and analyses the data.
@@ -95,7 +76,7 @@ def select_report(report: str):
     
     try:
         # connect to the SQLite database
-        conn = sqlite3.connect('./data/maindb.sqlite')
+        conn = sqlite3.connect('../data/maindb.sqlite')
         df = pd.read_sql_query(
             "SELECT * FROM articles WHERE project = '{}'".format(report),
             conn
@@ -121,7 +102,7 @@ def select_report(report: str):
 
     # outputs a dataframe
     df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog']]
-    df_selected.to_csv('./data/output/report/output.csv')
+    df_selected.to_csv('../data/output/report/output.csv')
 
 
 if __name__=='__main__':
