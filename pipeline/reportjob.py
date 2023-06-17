@@ -8,7 +8,13 @@ import itertools
 from textstat import flesch_reading_ease, gunning_fog
 import re
 
-"""I may have to use pandas instead to construct this nlp job."""
+import statistics
+
+import spacy
+from spacy_arguing_lexicon import ArguingLexiconParser
+from spacy.language import Language
+from spacytextblob.spacytextblob import SpacyTextBlob
+
 
 """[
     id: int, 
@@ -29,27 +35,21 @@ import re
     keywords: string
     ]
 
-    We have a lot of things we could take from textstat as well:
-    textstat.flesch_reading_ease(test_data)
-    textstat.flesch_kincaid_grade(test_data)
-    textstat.smog_index(test_data)
-    textstat.coleman_liau_index(test_data)
-    textstat.automated_readability_index(test_data)
-    textstat.dale_chall_readability_score(test_data)
-    textstat.difficult_words(test_data)
-    textstat.linsear_write_formula(test_data)
-    textstat.gunning_fog(test_data)
-    textstat.text_standard(test_data)
-    textstat.fernandez_huerta(test_data)
-    textstat.szigriszt_pazos(test_data)
-    textstat.gutierrez_polini(test_data)
-    textstat.crawford(test_data)
-    textstat.gulpease_index(test_data)
-    textstat.osman(test_data)
 """
+
+"""Set Up NLP Models"""
 # create a dictionary object for the English language
 english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
 
+# Create the spacy nlp pipeline
+nlp = spacy.load("en_core_web_sm")
+
+@Language.factory("ArguingLexiconParser", default_config={"lang":nlp.lang})
+def CreateArguingLexiconParser(nlp, name, lang):
+    return ArguingLexiconParser()
+
+nlp.add_pipe("ArguingLexiconParser")
+nlp.add_pipe("spacytextblob")
 
 """NLP Functions"""
 
@@ -84,6 +84,71 @@ def reputable_source(url: str):
     
     return points
 
+def arg_mining_udf(nlp, sentences):
+    """UDF for arg_mining column"""
+    total_count = 0
+
+    for sentence in sentences:
+        try:
+            doc = nlp(sentence)
+            argument_span = next(doc._.arguments.get_argument_spans())
+            total_count += len(argument_span)
+        except StopIteration:
+            continue
+    print(total_count)
+    return total_count
+
+def arg_mining(df):
+    df['num_of_arg_phrases'] = df.apply(lambda row: arg_mining_udf(nlp, row['sentences']), axis=1)
+    return df
+
+
+def sentiment_analysis_udf(nlp, content, keywords):
+    doc = nlp(content)
+
+    content_polarity = doc._.blob.polarity
+    content_subjectivity = doc._.blob.subjectivity
+
+    # now get keyword sentiment
+
+    key_sentiments_list = []
+    # split each keyword into a separate sentence to analyse
+    # rounding keywords due to their importance to the text
+    keyword_list = keywords.split(',')
+    for keyword in keyword_list:
+        doc = nlp(keyword)
+        if doc._.blob.polarity > 0:
+            key_polarity = -1
+        elif doc._.blob.polarity == 0:
+            key_polarity = doc._.blob.polarity
+        else:
+            key_polarity = 1
+        key_sentiments_list.append(key_polarity)
+
+    # bias keywords in sentiment analysis
+    keyword_total_score = statistics.mean(key_sentiments_list)
+
+    ensemble_sentiment_score = statistics.mean([
+        content_polarity, keyword_total_score, keyword_total_score
+        ])
+    
+    if ensemble_sentiment_score >= 0.0:
+        sentiment = 'POSITIVE'
+    else:
+        sentiment = 'NEGATIVE'
+
+    return pd.Series(
+        [
+            ensemble_sentiment_score,
+            content_subjectivity,
+            sentiment
+        ]
+    )
+
+def sentiment_analysis(df):
+    df[['polarity','subjectivity','sentiment']] = df.apply(
+        lambda row: sentiment_analysis_udf(nlp, row['content'], row['keywords']), axis=1)
+    return df
 
 
 def select_report(report: str):
@@ -95,7 +160,7 @@ def select_report(report: str):
     
     try:
         # connect to the SQLite database
-        conn = sqlite3.connect('./data/maindb.sqlite')
+        conn = sqlite3.connect('../data/maindb.sqlite')
         df = pd.read_sql_query(
             "SELECT * FROM articles WHERE project = '{}'".format(report),
             conn
@@ -110,18 +175,40 @@ def select_report(report: str):
     
 
     # NLP operations
+    print("Counting spelling mistakes")
     df['num_spelling_mistakes'] = df['words'].apply(
         lambda sentence_list: sum([
             count_spelling_mistakes(sentence) for sentence in sentence_list]))
-
+    print("Checking source of articles")
     df['source_reputation'] = df['url'].apply(reputable_source)
 
+    print("Parsing readability scores")
     df = add_reading_scores(df)
 
+    print("Parsing arguments")
+    df = arg_mining(df)
 
+    print("Getting Sentiment")
+    df = sentiment_analysis(df)
+
+    print("All done! Saving...")
     # outputs a dataframe
-    df_selected = df[['title','num_spelling_mistakes','source_reputation','flesch_reading_ease', 'gunning_fog']]
-    df_selected.to_csv('./data/output/report/output.csv')
+    df_selected = df[[
+        'title',
+        'keywords',
+        'author',
+        'project',
+        'url',
+        'num_spelling_mistakes',
+        'source_reputation',
+        'flesch_reading_ease',
+        'gunning_fog',
+        'num_of_arg_phrases',
+        'polarity',
+        'subjectivity',
+        'sentiment'
+        ]]
+    df_selected.to_csv('../data/output/report/output.csv')
 
 
 if __name__=='__main__':
