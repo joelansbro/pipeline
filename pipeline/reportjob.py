@@ -9,7 +9,6 @@ import itertools
 # NLP modules
 import enchant
 import tldextract
-from transformers import pipeline
 
 import spacy
 from spacy_arguing_lexicon import ArguingLexiconParser
@@ -28,14 +27,6 @@ nlp = spacy.load("en_core_web_sm")
 @Language.factory("ArguingLexiconParser", default_config={"lang":nlp.lang})
 def CreateArguingLexiconParser(nlp, name, lang):
     return ArguingLexiconParser()
-
-
-classifier = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-3")
-hypothesis_template = "This text is about {}."
-with open('../misc/model_labels.txt') as file:
-    contents = file.read()
-    lines = contents.split('\n')
-    model_labels = [line for line in lines if line.strip()]
 
 """NLP Functions"""
 
@@ -137,39 +128,6 @@ def sentiment_analysis(df):
         lambda row: sentiment_analysis_udf(nlp, row['content'], row['keywords']), axis=1)
     return df
 
-def topic_modeller_udf(title, keywords, excerpt):
-    label_dict = {string: [] for string in model_labels}
-    
-    prediction = classifier(title, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
-    for label, score in zip(prediction['labels'], prediction['scores']):
-        if label in label_dict:
-            label_dict[label].append(score)
-    
-    prediction = classifier(keywords, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
-    for label, score in zip(prediction['labels'], prediction['scores']):
-        if label in label_dict:
-            label_dict[label].append(score)
-
-    prediction = classifier(excerpt, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
-    for label, score in zip(prediction['labels'], prediction['scores']):
-        if label in label_dict:
-            label_dict[label].append(score)
-
-    aggregated_scores = {}
-    for label, scores in label_dict.items():
-        total_score = statistics.mean(scores)
-        aggregated_scores[label] = total_score
-    
-    print("Topic Modelled...")
-    print(aggregated_scores)
-    return max(aggregated_scores, key=aggregated_scores.get)
-
-
-def topic_modeller(df):
-    df['blog_topic'] = df.apply(
-        lambda row: topic_modeller_udf(row['title'], row['keywords'], row['excerpt']), axis=1)
-    return df
-
 def text_descriptives_udf(content):
     doc = nlp(content)
     
@@ -244,9 +202,6 @@ def select_report(report: str):
     df = text_descriptives(df)
     nlp.remove_pipe("textdescriptives/all")
 
-    print("Beginning topic modelling")
-    df = topic_modeller(df)
-
     print("All done! Saving...")
     # outputs a dataframe
     df_selected = df[[
@@ -261,7 +216,6 @@ def select_report(report: str):
         'polarity',
         'subjectivity',
         'sentiment',
-        'blog_topic',
         'flesch_reading_ease',
         'gunning_fog',
         'mean_token_length',
@@ -272,7 +226,6 @@ def select_report(report: str):
         'perplexity'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
-
 
 if __name__=='__main__':
     select_report('None')
