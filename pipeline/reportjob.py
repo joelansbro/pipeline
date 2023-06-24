@@ -9,15 +9,13 @@ import itertools
 # NLP modules
 import enchant
 import tldextract
-from textstat import flesch_reading_ease, gunning_fog
 from transformers import pipeline
 
 import spacy
 from spacy_arguing_lexicon import ArguingLexiconParser
 from spacy.language import Language
 from spacytextblob.spacytextblob import SpacyTextBlob
-
-
+import textdescriptives as td
 
 
 """Set Up NLP Models"""
@@ -31,8 +29,6 @@ nlp = spacy.load("en_core_web_sm")
 def CreateArguingLexiconParser(nlp, name, lang):
     return ArguingLexiconParser()
 
-nlp.add_pipe("ArguingLexiconParser")
-nlp.add_pipe("spacytextblob")
 
 classifier = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-3")
 hypothesis_template = "This text is about {}."
@@ -48,10 +44,6 @@ def count_spelling_mistakes(sentence):
     num_misspelled = sum([not english_dict.check(word.lower()) for word in sentence])
     return num_misspelled
 
-def add_reading_scores(df):
-    df['flesch_reading_ease'] = df.apply(lambda row: flesch_reading_ease(row['content']), axis=1)
-    df['gunning_fog'] = df.apply(lambda row: gunning_fog(row['content']), axis=1)    
-    return df
 
 def reputable_source(url: str):
     """Checks if the blog article is from a reputable source.
@@ -178,6 +170,35 @@ def topic_modeller(df):
         lambda row: topic_modeller_udf(row['title'], row['keywords'], row['excerpt']), axis=1)
     return df
 
+def text_descriptives_udf(content):
+    doc = nlp(content)
+    
+    return pd.Series(
+        [
+            doc._.readability['flesch_reading_ease'],
+            doc._.readability['gunning_fog'],
+            doc._.token_length['token_length_mean'],
+            doc._.syllables['syllables_per_token_mean'],
+            doc._.coherence['first_order_coherence'],
+            doc._.coherence['second_order_coherence'],
+            doc._.information_theory['entropy'],
+            doc._.information_theory['perplexity']
+        ]
+    )    
+
+def text_descriptives(df):
+    df[[
+        'flesch_reading_ease',
+        'gunning_fog',
+        'mean_token_length',
+        'syllables_per_token',
+        'first_order_coherence',
+        'second_order_coherence',
+        'entropy', 
+        'perplexity'
+    ]] = df.apply(
+            lambda row: text_descriptives_udf(row['content']), axis = 1)
+    return df
 
 def select_report(report: str):
     """
@@ -200,7 +221,6 @@ def select_report(report: str):
 
     df['sentences'] = df['content'].apply(nltk.sent_tokenize)
     df['words'] = df['sentences'].apply(lambda s: list(itertools.chain.from_iterable([nltk.word_tokenize(sentence) for sentence in s])))
-    
 
     # NLP operations
     print("Counting spelling mistakes")
@@ -210,14 +230,19 @@ def select_report(report: str):
     print("Checking source of articles")
     df['source_reputation'] = df['url'].apply(reputable_source)
 
-    print("Parsing readability scores")
-    df = add_reading_scores(df)
-
+    nlp.add_pipe("ArguingLexiconParser")
     print("Parsing arguments")
     df = arg_mining(df)
+    nlp.remove_pipe("ArguingLexiconParser")
 
+    nlp.add_pipe("spacytextblob")
     print("Getting Sentiment")
     df = sentiment_analysis(df)
+    nlp.remove_pipe("spacytextblob")
+
+    nlp.add_pipe("textdescriptives/all")
+    df = text_descriptives(df)
+    nlp.remove_pipe("textdescriptives/all")
 
     print("Beginning topic modelling")
     df = topic_modeller(df)
@@ -232,13 +257,19 @@ def select_report(report: str):
         'url',
         'num_spelling_mistakes',
         'source_reputation',
-        'flesch_reading_ease',
-        'gunning_fog',
         'num_of_arg_phrases',
         'polarity',
         'subjectivity',
         'sentiment',
-        'blog_topic'
+        'blog_topic',
+        'flesch_reading_ease',
+        'gunning_fog',
+        'mean_token_length',
+        'syllables_per_token',
+        'first_order_coherence',
+        'second_order_coherence',
+        'entropy', 
+        'perplexity'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
 
