@@ -1,14 +1,16 @@
+import re
+import statistics
+
 import sqlite3
 import pandas as pd
+import nltk
+import itertools
+
+# NLP modules
 import enchant
 import tldextract
-import numpy as np
-import nltk # uses punkt
-import itertools
 from textstat import flesch_reading_ease, gunning_fog
-import re
-
-import statistics
+from transformers import pipeline
 
 import spacy
 from spacy_arguing_lexicon import ArguingLexiconParser
@@ -16,26 +18,7 @@ from spacy.language import Language
 from spacytextblob.spacytextblob import SpacyTextBlob
 
 
-"""[
-    id: int, 
-    title: string, 
-    author: string, 
-    project: string, 
-    date_published: string, 
-    lead_image_url: string, 
-    content: string, 
-    next_page_url: string, 
-    url: string, 
-    domain: string, 
-    excerpt: string, 
-    word_count: int, 
-    direction: string, 
-    total_pages: int, 
-    rendered_pages: string, 
-    keywords: string
-    ]
 
-"""
 
 """Set Up NLP Models"""
 # create a dictionary object for the English language
@@ -50,6 +33,13 @@ def CreateArguingLexiconParser(nlp, name, lang):
 
 nlp.add_pipe("ArguingLexiconParser")
 nlp.add_pipe("spacytextblob")
+
+classifier = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-3")
+hypothesis_template = "This text is about {}."
+with open('../misc/model_labels.txt') as file:
+    contents = file.read()
+    lines = contents.split('\n')
+    model_labels = [line for line in lines if line.strip()]
 
 """NLP Functions"""
 
@@ -155,6 +145,39 @@ def sentiment_analysis(df):
         lambda row: sentiment_analysis_udf(nlp, row['content'], row['keywords']), axis=1)
     return df
 
+def topic_modeller_udf(title, keywords, excerpt):
+    label_dict = {string: [] for string in model_labels}
+    
+    prediction = classifier(title, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
+    for label, score in zip(prediction['labels'], prediction['scores']):
+        if label in label_dict:
+            label_dict[label].append(score)
+    
+    prediction = classifier(keywords, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
+    for label, score in zip(prediction['labels'], prediction['scores']):
+        if label in label_dict:
+            label_dict[label].append(score)
+
+    prediction = classifier(excerpt, model_labels, hypothesis_template=hypothesis_template, multi_label=True)
+    for label, score in zip(prediction['labels'], prediction['scores']):
+        if label in label_dict:
+            label_dict[label].append(score)
+
+    aggregated_scores = {}
+    for label, scores in label_dict.items():
+        total_score = statistics.mean(scores)
+        aggregated_scores[label] = total_score
+    
+    print("Topic Modelled...")
+    print(aggregated_scores)
+    return max(aggregated_scores, key=aggregated_scores.get)
+
+
+def topic_modeller(df):
+    df['blog_topic'] = df.apply(
+        lambda row: topic_modeller_udf(row['title'], row['keywords'], row['excerpt']), axis=1)
+    return df
+
 
 def select_report(report: str):
     """
@@ -196,6 +219,9 @@ def select_report(report: str):
     print("Getting Sentiment")
     df = sentiment_analysis(df)
 
+    print("Beginning topic modelling")
+    df = topic_modeller(df)
+
     print("All done! Saving...")
     # outputs a dataframe
     df_selected = df[[
@@ -211,7 +237,8 @@ def select_report(report: str):
         'num_of_arg_phrases',
         'polarity',
         'subjectivity',
-        'sentiment'
+        'sentiment',
+        'blog_topic'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
 

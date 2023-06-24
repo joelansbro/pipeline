@@ -111,3 +111,16 @@ Schema for the SQLite database table 'articles':
 	"keywords"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 ```
+
+
+Quick method of getting rid of any duplicates based on title name:
+```
+
+DELETE FROM articles
+WHERE rowid NOT IN (
+  SELECT MIN(rowid)
+  FROM articles
+  GROUP BY title
+);
+
+```
