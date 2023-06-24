@@ -39,7 +39,7 @@ from spacytextblob.spacytextblob import SpacyTextBlob
 
 """Set Up NLP Models"""
 # create a dictionary object for the English language
-english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
+english_dict = enchant.DictWithPWL("en_US", "../misc/my_pwl.txt")
 
 # Create the spacy nlp pipeline
 nlp = spacy.load("en_core_web_sm")
@@ -69,7 +69,12 @@ def reputable_source(url: str):
     In future could load in a separate CSV of locations for this task, 
     but this will be fine as a proof of concept.
     """
-    reputable_websites = {'apple.com', 'shopify.com', 'science.org', 'ieee.org', 'news.ycombinator.com'}
+
+    with open('../misc/rep_websites.txt') as file:
+        contents = file.read()
+        lines = contents.split('\n')
+        reputable_websites = [line for line in lines if line.strip()]
+
     reputable_suffixes = {'org', 'edu', 'ac', 'gov'}
 
     points = 0
