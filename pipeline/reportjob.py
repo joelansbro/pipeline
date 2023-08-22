@@ -19,7 +19,7 @@ import textdescriptives as td
 
 """Set Up NLP Models"""
 # create a dictionary object for the English language
-english_dict = enchant.DictWithPWL("en_US", "../misc/my_pwl.txt")
+english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
 
 # Create the spacy nlp pipeline
 nlp = spacy.load("en_core_web_sm")
@@ -43,7 +43,7 @@ def reputable_source(url: str):
     but this will be fine as a proof of concept.
     """
 
-    with open('../misc/rep_websites.txt') as file:
+    with open('rep_websites.txt') as file:
         contents = file.read()
         lines = contents.split('\n')
         reputable_websites = [line for line in lines if line.strip()]
@@ -158,6 +158,34 @@ def text_descriptives(df):
             lambda row: text_descriptives_udf(row['content']), axis = 1)
     return df
 
+def prior_experiences_udf(words):
+    """Counting up experience markers within the whole content text"""
+    experience_markers = ["i", "me", "we", "my", "experience"]
+    experience_count = sum(1 for word in words if word.lower() in experience_markers)
+
+    temporal_markers = ["yesterday", "today", "tomorrow", "last", "this", "next"]
+    temporal_count = sum(1 for word in words if word.lower() in temporal_markers)
+
+    past_tense_count = sum(1 for word in words if word.lower().endswith("ed"))
+    gerund_count = sum(1 for word in words if word.lower().endswith("ing"))
+
+    return pd.Series([
+        experience_count,
+        temporal_count,
+        past_tense_count,
+        gerund_count
+    ])
+
+def prior_experiences(df):
+    df[[
+        'experience_count',
+        'temporal_count',
+        'past_tense_count',
+        'gerund_count'
+    ]] = df.apply(
+        lambda row: prior_experiences_udf(row['words']), axis = 1)
+    return df
+
 def select_report(report: str):
     """
     This job gets all article rows from the sqlite DB and analyses the data.
@@ -182,9 +210,11 @@ def select_report(report: str):
 
     # NLP operations
     print("Counting spelling mistakes")
+    # this spelling mistake work is fucked change it
     df['num_spelling_mistakes'] = df['words'].apply(
         lambda sentence_list: sum([
             count_spelling_mistakes(sentence) for sentence in sentence_list]))
+    
     print("Checking source of articles")
     df['source_reputation'] = df['url'].apply(reputable_source)
 
@@ -202,6 +232,8 @@ def select_report(report: str):
     df = text_descriptives(df)
     nlp.remove_pipe("textdescriptives/all")
 
+    df = prior_experiences(df)
+
     print("All done! Saving...")
     # outputs a dataframe
     df_selected = df[[
@@ -210,6 +242,7 @@ def select_report(report: str):
         'author',
         'project',
         'url',
+        'date_published',
         'num_spelling_mistakes',
         'source_reputation',
         'num_of_arg_phrases',
@@ -223,9 +256,13 @@ def select_report(report: str):
         'first_order_coherence',
         'second_order_coherence',
         'entropy', 
-        'perplexity'
+        'perplexity',
+        'experience_count',
+        'temporal_count',
+        'past_tense_count',
+        'gerund_count'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
 
 if __name__=='__main__':
-    select_report('None')
+    select_report('test_proj')
