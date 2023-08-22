@@ -158,8 +158,8 @@ def text_descriptives(df):
             lambda row: text_descriptives_udf(row['content']), axis = 1)
     return df
 
-def prior_experiences_udf(words):
-    """Counting up experience markers within the whole content text"""
+def parse_specifics_udf(words):
+    """Counting up specific markers within the word lists of the text."""
     experience_markers = ["i", "me", "we", "my", "experience"]
     experience_count = sum(1 for word in words if word.lower() in experience_markers)
 
@@ -173,18 +173,47 @@ def prior_experiences_udf(words):
         experience_count,
         temporal_count,
         past_tense_count,
-        gerund_count
+        gerund_count,
     ])
 
-def prior_experiences(df):
+def parse_specifics(df):
     df[[
         'experience_count',
         'temporal_count',
         'past_tense_count',
-        'gerund_count'
+        'gerund_count',
     ]] = df.apply(
-        lambda row: prior_experiences_udf(row['words']), axis = 1)
+        lambda row: parse_specifics_udf(row['words']), axis = 1)
     return df
+
+def get_meta_links_udf(content):
+    """Simpler finds that rely upon entire content chunks"""
+    # this one gets the marks of whether a blog articles mentions that it is sponsored
+    sponsored_markers = ["our sponsor", "sponsored by", "funded by", "our funder", "brought to you by", "presented by",
+                         "supported by", "our supporter", "paid for by", "this article is brought", "this content is brought",
+                         "sponsored content"]
+    sponsored_count = sum(1 for word in content if word.lower() in sponsored_markers)
+
+    # count up the number of urls that are not local hosts to try to find sources of linked content
+    url_pattern = r'https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    matches = re.findall(url_pattern, content)
+    filtered_matches = [url for url in matches if not re.match(r'https?://(localhost|\d+\.\d+\.\d+\.\d+)', url)]
+    reference_count = len(filtered_matches)
+
+    return pd.Series([
+        sponsored_count,
+        reference_count
+    ])
+
+def get_meta_links(df):
+    df[[
+        'sponsor_count',
+        'reference_count'
+    ]] = df.apply(
+        lambda row: get_meta_links_udf(row['content']), axis = 1)
+    return df
+
+
 
 def select_report(report: str):
     """
@@ -232,7 +261,8 @@ def select_report(report: str):
     df = text_descriptives(df)
     nlp.remove_pipe("textdescriptives/all")
 
-    df = prior_experiences(df)
+    df = parse_specifics(df)
+    df = get_meta_links(df)
 
     print("All done! Saving...")
     # outputs a dataframe
@@ -260,7 +290,9 @@ def select_report(report: str):
         'experience_count',
         'temporal_count',
         'past_tense_count',
-        'gerund_count'
+        'gerund_count',
+        'sponsor_count',
+        'reference_count'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
 
