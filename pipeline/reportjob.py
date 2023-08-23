@@ -297,4 +297,4 @@ def select_report(report: str):
     df_selected.to_csv('../data/output/report/output.csv')
 
 if __name__=='__main__':
-    select_report('test_proj')
+    select_report('teamwork_beta')

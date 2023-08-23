@@ -1,8 +1,7 @@
 import random
-from w3lib.html import replace_entities
 from pyspark.sql.functions import udf
 from datetime import datetime
-
+import html
 # This module contains any kind of script or object that is used in different scripts
 
 
@@ -13,4 +12,4 @@ def parquet_name():
 
 
 """ Converting function to UDF """
-entity_UDF = udf(lambda content: replace_entities(content))
+entity_UDF = udf(lambda content: html.unescape(content))

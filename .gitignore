@@ -12,3 +12,5 @@ maindb.spbpro
 __pycache__/celeryBroker.cpython-38.pyc
 __pycache__/config.cpython-38.pyc
 *.csv
+scratch.ipynb
+my_pwl.txt
