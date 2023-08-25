@@ -1,5 +1,7 @@
 import re
 import statistics
+import string
+import json
 
 import sqlite3
 import pandas as pd
@@ -22,19 +24,43 @@ import textdescriptives as td
 english_dict = enchant.DictWithPWL("en_US", "my_pwl.txt")
 
 # Create the spacy nlp pipeline
+# will load a separate model for the topic classifier
 nlp = spacy.load("en_core_web_sm")
+nlpmd = spacy.load("en_core_web_md")
+
 
 @Language.factory("ArguingLexiconParser", default_config={"lang":nlp.lang})
 def CreateArguingLexiconParser(nlp, name, lang):
     return ArguingLexiconParser()
 
+# load in the topic modellers for the classifier
+try:
+    with open('topic_oneshot.json', 'r') as json_file:
+        # Load the JSON data from the file
+        topic_data = json.load(json_file)
+except FileNotFoundError:
+    print(f"The file was not found.")
+except json.JSONDecodeError as e:
+    print(f"Error decoding JSON: {e}")
+
+
 """NLP Functions"""
 
-def count_spelling_mistakes(sentence):
+def spelling_mistakes_udf(nlp, content):
     """Function to count the number of spelling mistakes in a string"""
-    num_misspelled = sum([not english_dict.check(word.lower()) for word in sentence])
-    return num_misspelled
+    doc = nlp(content)
+    mistake_count = 0
+    for token in doc:
+        try:
+            if not english_dict.check(token.text.strip(string.punctuation)):
+                mistake_count += 1
+        except ValueError as e:
+            continue
+    return mistake_count
 
+def spelling_mistakes(df):
+    df['num_spelling_mistakes'] = df.apply(lambda row: spelling_mistakes_udf(nlp, row['content']), axis=1)
+    return df
 
 def reputable_source(url: str):
     """Checks if the blog article is from a reputable source.
@@ -214,6 +240,16 @@ def get_meta_links(df):
     return df
 
 
+def get_topic_score_udf(title):
+    """Set to return the entry in the dict that corresponds to the json file passed in. This will need editing if the topic is different"""
+    print(nlpmd(title)._.cats)
+    return nlpmd(title)._.cats['teams']
+
+def text_categorizer(df):
+    """For getting the topic score related to the topic at hand"""
+    df['topic_score'] = df.apply(lambda row: get_topic_score_udf(row['title']),  axis = 1)
+    return df
+
 
 def select_report(report: str):
     """
@@ -238,12 +274,9 @@ def select_report(report: str):
     df['words'] = df['sentences'].apply(lambda s: list(itertools.chain.from_iterable([nltk.word_tokenize(sentence) for sentence in s])))
 
     # NLP operations
-    print("Counting spelling mistakes")
-    # this spelling mistake work is fucked change it
-    df['num_spelling_mistakes'] = df['words'].apply(
-        lambda sentence_list: sum([
-            count_spelling_mistakes(sentence) for sentence in sentence_list]))
-    
+    print("Counting spelling mistakes")    
+    df = spelling_mistakes(df)
+
     print("Checking source of articles")
     df['source_reputation'] = df['url'].apply(reputable_source)
 
@@ -258,11 +291,24 @@ def select_report(report: str):
     nlp.remove_pipe("spacytextblob")
 
     nlp.add_pipe("textdescriptives/all")
+    print("Getting Text Descriptives")
     df = text_descriptives(df)
     nlp.remove_pipe("textdescriptives/all")
 
+    print("parsing specifics")
     df = parse_specifics(df)
+    print("getting metalinks")
     df = get_meta_links(df)
+
+    print("getting title categories")
+    nlpmd.add_pipe("text_categorizer",
+             config={
+                "data": topic_data,
+                "model": "spacy",
+                "include_sent": True
+    })
+    df = text_categorizer(df)
+    nlpmd.remove_pipe("text_categorizer")
 
     print("All done! Saving...")
     # outputs a dataframe
@@ -292,9 +338,10 @@ def select_report(report: str):
         'past_tense_count',
         'gerund_count',
         'sponsor_count',
-        'reference_count'
+        'reference_count',
+        'topic_score'
         ]]
     df_selected.to_csv('../data/output/report/output.csv')
 
 if __name__=='__main__':
-    select_report('teamwork_beta')
+    select_report('highperformanceteams')
