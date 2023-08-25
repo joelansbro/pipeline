@@ -2,6 +2,7 @@ import re
 import statistics
 import string
 import json
+import multiprocessing
 
 import sqlite3
 import pandas as pd
@@ -99,7 +100,6 @@ def arg_mining_udf(nlp, sentences):
             total_count += len(argument_span)
         except StopIteration:
             continue
-    print(total_count)
     return total_count
 
 def arg_mining(df):
@@ -240,14 +240,35 @@ def get_meta_links(df):
     return df
 
 
-def get_topic_score_udf(title):
-    """Set to return the entry in the dict that corresponds to the json file passed in. This will need editing if the topic is different"""
-    print(nlpmd(title)._.cats)
-    return nlpmd(title)._.cats['teams']
+def get_topic_score_udf(row):
+    """Set to return the entry in the dict that corresponds to the json file passed in. 
+    
+    Get the aggregated score of both the title and excerpt, the content score is 
+    prohibitively expensive for my CPU.
+    Uses typeform/distilbert-base-uncased-mnli to be found here:
+    https://huggingface.co/typeform/distilbert-base-uncased-mnli
+    """
+    title_score = nlpmd(row['title'])._.cats['high-performance-teams']
+    excerpt_score = nlpmd(row['excerpt'])._.cats['high-performance-teams']
+    mean = statistics.mean([title_score, excerpt_score, excerpt_score])
+    print(mean)
+    return mean
 
-def text_categorizer(df):
-    """For getting the topic score related to the topic at hand"""
-    df['topic_score'] = df.apply(lambda row: get_topic_score_udf(row['title']),  axis = 1)
+# def text_categorizer(df):
+#     """For getting the topic score related to the topic at hand"""
+#     df['topic_score'] = df.apply(lambda row: get_topic_score_udf(row['title'], row['content']),  axis = 1)
+#     return df
+
+def text_categorizer_parallel(df):
+    num_cores = 4  # max cores 8, want to conserve some cpu
+    pool = multiprocessing.Pool(processes=num_cores)  # Create a pool of worker processes
+
+    # Use the map function to apply get_topic_score_udf to each row in parallel
+    df['topic_score'] = pool.map(get_topic_score_udf, df.itertuples(index=False))
+
+    pool.close()
+    pool.join()
+    
     return df
 
 
@@ -262,7 +283,11 @@ def select_report(report: str):
         # connect to the SQLite database
         conn = sqlite3.connect('../data/maindb.sqlite')
         df = pd.read_sql_query(
-            "SELECT * FROM articles WHERE project = '{}'".format(report),
+            """            
+                SELECT *
+                FROM articles
+                WHERE project = '{}'
+            """.format(report),
             conn
             )
     except sqlite3.Error as er:
@@ -270,6 +295,9 @@ def select_report(report: str):
         print("Exception class is: ", er.__class__)
     conn.close()
 
+    # pandas preprocessing
+    df = df.drop(columns=['id'])
+    df = df.drop_duplicates()
     df['sentences'] = df['content'].apply(nltk.sent_tokenize)
     df['words'] = df['sentences'].apply(lambda s: list(itertools.chain.from_iterable([nltk.word_tokenize(sentence) for sentence in s])))
 
@@ -303,21 +331,27 @@ def select_report(report: str):
     print("getting title categories")
     nlpmd.add_pipe("text_categorizer",
              config={
-                "data": topic_data,
-                "model": "spacy",
-                "include_sent": True
-    })
-    df = text_categorizer(df)
+                 "data": topic_data,
+                 "model": "typeform/distilbert-base-uncased-mnli",
+                 "cat_type": "zero",
+                 "device":"cpu"
+             })
+    df = text_categorizer_parallel(df)
     nlpmd.remove_pipe("text_categorizer")
 
     print("All done! Saving...")
     # outputs a dataframe
     df_selected = df[[
+        'id',
         'title',
         'keywords',
         'author',
         'project',
         'url',
+        'domain',
+        'word_count',
+        'excerpt',
+        'content',
         'date_published',
         'num_spelling_mistakes',
         'source_reputation',
